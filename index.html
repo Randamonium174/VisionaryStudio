@@ -23,6 +23,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{
   min-height:100%;
+  overflow-x:hidden; /* keep page stable */
 }
 body{
   font-family:Inter,sans-serif;
@@ -32,12 +33,18 @@ body{
   position:relative;
 }
 
-/* FIXED BACKGROUND (Safari-safe) */
+/* 🔥 Added: disable horizontal scroll during carousel swipe */
+body.lock-horizontal {
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
+}
+
+/* FIXED BACKGROUND */
 .vs-fixed-bg{
   position:fixed;
   inset:0;
   z-index:-10;
-  background-image:url("https://images.unsplash.com/photo-1604879616509-d841eec0ca4e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+  background-image:url("https://images.unsplash.com/photo-1604879616509-d841eec0ca4e?q=80&w=1740&auto=format&fit=crop");
   background-size:cover;
   background-position:center;
   background-repeat:no-repeat;
@@ -45,7 +52,7 @@ body{
 }
 @media (max-width:900px){
   .vs-fixed-bg{
-    background-image:url("https://images.unsplash.com/photo-1628498188873-579210ce622e?q=80&w=654&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+    background-image:url("https://images.unsplash.com/photo-1628498188873-579210ce622e?q=80&w=654&auto=format&fit=crop");
     background-position:center top;
   }
 }
@@ -95,7 +102,6 @@ body{
   -webkit-text-fill-color:transparent;
 }
 
-/* DESKTOP NAV LINKS */
 nav.primary{
   display:flex;
   gap:34px;
@@ -127,7 +133,7 @@ nav.primary a::after{
 }
 nav.primary a:hover::after{width:100%}
 
-/* TRI-DOT DICE MENU (mobile) */
+/* MOBILE MENU BUTTON */
 .tri-menu{
   display:none;
   position:relative;
@@ -141,8 +147,11 @@ nav.primary a:hover::after{width:100%}
   box-shadow:0 0 18px rgba(129,140,248,0.7);
   justify-content:center;
   align-items:center;
-  transition:.3s;
+
+  /* FIX: don't override transform animations */
+  transition: background .3s ease, box-shadow .3s ease, border-color .3s ease;
 }
+
 .tri-dot{
   position:absolute;
   width:8px;
@@ -150,39 +159,17 @@ nav.primary a:hover::after{width:100%}
   background:white;
   border-radius:50%;
   box-shadow:0 0 8px rgba(255,255,255,0.9);
-  transition:opacity .22s ease;
+  transition:opacity .22s ease, filter .18s ease;
 }
 
-/* base triangle positions (used as face positions) */
-.tri-dot.dot1{
-  top:50%;
-  left:50%;
+.dot1{
+  top:50%;left:50%;
   transform:translate(-50%,-50%);
 }
-.tri-dot.dot2{
-  top:11px;
-  left:11px;
-}
-.tri-dot.dot3{
-  bottom:11px;
-  right:11px;
-}
 
-/* dice rolling animation */
-.tri-menu.rolling{
-  animation:diceRoll 0.45s ease-in-out;
-}
+.dot2{ top:11px; left:11px; }
+.dot3{ bottom:11px; right:11px; }
 
-@keyframes diceRoll{
-  0%{transform:translateY(0) rotate(0deg);}
-  20%{transform:translateY(-2px) rotate(10deg);}
-  40%{transform:translateY(2px) rotate(-10deg);}
-  60%{transform:translateY(-1px) rotate(6deg);}
-  80%{transform:translateY(1px) rotate(-4deg);}
-  100%{transform:translateY(0) rotate(0deg);}
-}
-
-/* MOBILE DROPDOWN */
 .mobile-dropdown{
   position:fixed;
   top:100px;
@@ -209,6 +196,9 @@ nav.primary a:hover::after{width:100%}
   pointer-events:auto;
   transform:translateX(-50%) translateY(0);
 }
+
+/* HERO SECTION and REST OF YOUR ORIGINAL CSS REMAINS THE SAME... */
+
 .mobile-dropdown a{
   font-family:'Space Grotesk';
   font-weight:800;
@@ -999,7 +989,7 @@ function updateStackPositions() {
   stackCards.forEach((card, idx) => {
     card.classList.remove("pos-center","pos-left1","pos-left2","pos-right1","pos-right2");
     let offset = (idx - activeIndex + total) % total;
-    // 0 center, 1 right1, 2 right2, 3 left2, 4 left1
+
     if (offset === 0) {
       card.classList.add("pos-center");
       card.style.opacity = 1;
@@ -1029,6 +1019,7 @@ if (stackCards.length) {
     activeIndex = (activeIndex + 1) % stackCards.length;
     updateStackPositions();
   }
+
   function goPrev() {
     activeIndex = (activeIndex - 1 + stackCards.length) % stackCards.length;
     updateStackPositions();
@@ -1049,37 +1040,46 @@ if (stackCards.length) {
   let touchStartY = null;
 
   if (wrap) {
+
     wrap.addEventListener("touchstart", (e) => {
       const t = e.touches[0];
       touchStartX = t.clientX;
       touchStartY = t.clientY;
-    }, {passive:true});
+
+      // 🔥 Lock horizontal scroll on the whole webpage
+      document.body.classList.add("lock-horizontal");
+
+    }, { passive: true });
 
     wrap.addEventListener("touchend", (e) => {
-      if (touchStartX === null || touchStartY === null) return;
-      const t = e.changedTouches[0];
-      const dx = t.clientX - touchStartX;
-      const dy = t.clientY - touchStartY;
 
-      const absDx = Math.abs(dx);
-      const absDy = Math.abs(dy);
-      const threshold = 40;
+      if (touchStartX !== null && touchStartY !== null) {
+        const t = e.changedTouches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
 
-      if (absDx > absDy && absDx > threshold) {
-        if (dx < 0) {
-          goNext(); // swipe left -> next
-        } else {
-          goPrev(); // swipe right -> prev
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+        const threshold = 40;
+
+        if (absDx > absDy && absDx > threshold) {
+          if (dx < 0) goNext();   // swipe left
+          else goPrev();          // swipe right
         }
       }
 
+      // 🔥 ALWAYS unlock after swipe completes
+      document.body.classList.remove("lock-horizontal");
+
       touchStartX = null;
       touchStartY = null;
-    }, {passive:true});
+
+    }, { passive: true });
   }
 
   window.addEventListener("resize", updateStackPositions);
 }
+
 </script>
 
 </body>
