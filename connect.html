@@ -47,7 +47,7 @@ body{
 }
 
 /* -----------------------------------------------------------
-   NAVIGATION (CLEAN VERSION — ONLY HOVER UNDERLINE)
+   NAVIGATION
 ----------------------------------------------------------- */
 .nav-wrap{
   position:fixed;top:18px;left:0;right:0;
@@ -83,8 +83,10 @@ nav.primary{
   display:flex;gap:34px;align-items:center;
 }
 
-nav.primary a{
-  color:white;text-decoration:none;
+nav.primary a,
+nav.primary a:visited{
+  color:white !important;
+  text-decoration:none !important;
   font-family:'Space Grotesk';
   font-weight:800;font-size:0.9rem;
   letter-spacing:0.16em;
@@ -98,7 +100,7 @@ nav.primary a:hover{
   opacity:0.9;
 }
 
-/* GRADIENT UNDERLINE ON HOVER (FINAL) */
+/* GRADIENT UNDERLINE ON HOVER */
 nav.primary a::after{
   content:"";
   position:absolute;
@@ -109,30 +111,64 @@ nav.primary a::after{
   box-shadow:0 0 10px rgba(236,72,153,0.55);
   transition:width .35s ease;
 }
+nav.primary a:hover::after{width:100%}
 
-nav.primary a:hover::after{
-  width:100%;
-}
-
-/* MOBILE TRI MENU */
+/* -----------------------------------------------------------
+   TRI-DOT DICE MENU (WITH PROPER DOT FACES)
+----------------------------------------------------------- */
 .tri-menu{
-  display:none;width:46px;height:46px;
+  display:none;
+  position:relative;
+  width:46px;
+  height:46px;
   border-radius:14px;
-  border:1px solid rgba(255,255,255,0.15);
-  background:rgba(0,0,0,0.65);
+  background:rgba(0,0,0,0.55);
+  border:1px solid rgba(255,255,255,0.5);
+  backdrop-filter:blur(12px);
+  cursor:pointer;
+  box-shadow:0 0 18px rgba(129,140,248,0.7);
   justify-content:center;align-items:center;
+  transition:.3s;
 }
-.tri-dot{position:absolute;width:8px;height:8px;background:white;border-radius:50%}
-.dot1{top:50%;left:50%;transform:translate(-50%,-50%)}
-.dot2{top:11px;left:11px}
-.dot3{bottom:11px;right:11px}
+
+.tri-dot{
+  position:absolute;
+  width:10px;
+  height:10px;
+  background:white;
+  border-radius:50%;
+  box-shadow:0 0 8px rgba(255,255,255,0.9);
+  opacity:0; /* faces controlled by JS */
+  transition:opacity .2s ease;
+}
+
+/* base dot positions */
+.dot1{ top:50%; left:50%; transform:translate(-50%,-50%); } /* center */
+.dot2{ top:9px; left:9px; } /* top-left */
+.dot3{ bottom:9px; right:9px; } /* bottom-right */
+
+/* shake */
+.tri-menu.rolling{
+  animation:diceRoll .45s ease-in-out;
+}
+
+@keyframes diceRoll{
+  0%{transform:translateY(0) rotate(0deg);}
+  20%{transform:translateY(-2px) rotate(10deg);}
+  40%{transform:translateY(2px) rotate(-10deg);}
+  60%{transform:translateY(-1px) rotate(6deg);}
+  80%{transform:translateY(1px) rotate(-4deg);}
+  100%{transform:translateY(0) rotate(0deg);}
+}
 
 @media(max-width:900px){
   nav.primary{display:none}
   .tri-menu{display:flex}
 }
 
-/* MOBILE DROPDOWN */
+/* -----------------------------------------------------------
+   MOBILE DROPDOWN
+----------------------------------------------------------- */
 .mobile-dropdown{
   position:fixed;top:100px;left:50%;
   transform:translateX(-50%) translateY(-10px);
@@ -146,13 +182,25 @@ nav.primary a:hover::after{
   opacity:0;pointer-events:none;
   transition:.25s;
 }
+
 .mobile-dropdown.active{
   opacity:1;pointer-events:auto;
   transform:translateX(-50%) translateY(0);
 }
 
+.mobile-dropdown a,
+.mobile-dropdown a:visited,
+.mobile-dropdown a:hover,
+.mobile-dropdown a:active{
+  color:white !important;
+  text-decoration:none !important;
+  font-family:'Space Grotesk';
+  font-weight:800;
+  font-size:1.05rem;
+}
+
 /* -----------------------------------------------------------
-   CONNECT CONTAINER
+   CONNECT AREA
 ----------------------------------------------------------- */
 main{padding-top:120px;flex:1}
 
@@ -179,7 +227,6 @@ main{padding-top:120px;flex:1}
   }
 }
 
-/* LEFT TEXT */
 .kicker{
   display:inline-flex;align-items:center;gap:10px;
   padding:6px 14px;
@@ -216,7 +263,6 @@ main{padding-top:120px;flex:1}
   margin-top:26px;display:flex;gap:14px;flex-wrap:wrap;
 }
 
-/* BUTTONS */
 .btn{
   padding:12px 26px;border-radius:999px;
   background:rgba(255,255,255,0.05);
@@ -230,14 +276,15 @@ main{padding-top:120px;flex:1}
 .btn .fill{
   position:absolute;inset:0;
   background:var(--vs-gradient);
-  transform:scaleX(0);transform-origin:left;
+  transform:scaleX(0);
+  transform-origin:left;
   transition:.35s;z-index:1;
 }
 .btn span{position:relative;z-index:2}
 .btn:hover .fill{transform:scaleX(1)}
 .btn:hover{transform:translateY(-3px)}
 
-/* RIGHT CONTACT CARD */
+/* CONTACT CARD */
 .contact-card{
   background:rgba(0,0,0,0.75);
   border:1px solid rgba(255,255,255,0.12);
@@ -254,9 +301,9 @@ main{padding-top:120px;flex:1}
   border:1px solid rgba(255,255,255,0.15);
   display:grid;place-items:center;
 }
+
 .contact-title{
-  font-family:'Space Grotesk';font-size:1.05rem;
-  font-weight:800;
+  font-family:'Space Grotesk';font-size:1.05rem;font-weight:800;
 }
 .contact-sub{color:var(--soft-text);margin-top:3px;font-size:0.92rem}
 
@@ -282,8 +329,7 @@ main{padding-top:120px;flex:1}
 
 .close-btn{
   position:absolute;top:12px;right:16px;
-  font-size:1.6rem;cursor:pointer;
-  color:white;
+  font-size:1.6rem;cursor:pointer;color:white;
 }
 
 .form-popup input,
@@ -319,7 +365,6 @@ footer{
     <nav class="primary">
       <a href="index.html">HOME</a>
       <a href="core.html">CORE</a>
-  
     </nav>
 
     <button class="tri-menu" id="triMenu">
@@ -334,7 +379,6 @@ footer{
 <div class="mobile-dropdown" id="mobileDropdown">
   <a href="index.html">HOME</a>
   <a href="core.html">CORE</a>
- 
 </div>
 
 <main>
@@ -377,7 +421,7 @@ footer{
           </div>
         </div>
       
-        <!-- PHONE / WHATSAPP ROW -->
+        <!-- PHONE ROW -->
         <div class="contact-row">
           <div class="icon-round">
             <svg width="24" height="24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -425,10 +469,55 @@ footer{
 /* YEAR */
 document.getElementById("year").textContent = new Date().getFullYear();
 
-/* MOBILE MENU */
+/* -----------------------------------------------------------
+   DICE FACE CYCLE (1 → 2 dots → 3 dots → repeat)
+----------------------------------------------------------- */
 const tri = document.getElementById("triMenu");
 const drop = document.getElementById("mobileDropdown");
-tri.onclick = ()=> drop.classList.toggle("active");
+
+const d1 = document.querySelector(".dot1");
+const d2 = document.querySelector(".dot2");
+const d3 = document.querySelector(".dot3");
+
+let face = 1;
+
+function updateDice(){
+  d1.style.opacity = 0;
+  d2.style.opacity = 0;
+  d3.style.opacity = 0;
+
+  if(face === 1){
+    d1.style.opacity = 1; // center
+  }
+  else if(face === 2){
+    d2.style.opacity = 1; // TL
+    d3.style.opacity = 1; // BR
+  }
+  else if(face === 3){
+    d1.style.opacity = 1;
+    d2.style.opacity = 1;
+    d3.style.opacity = 1;
+  }
+}
+
+updateDice();
+
+/* MENU CLICK */
+tri.onclick = () => {
+
+  tri.classList.add("rolling");
+  setTimeout(() => tri.classList.remove("rolling"), 450);
+
+  face = face === 3 ? 1 : face + 1;
+  updateDice();
+
+  drop.classList.toggle("active");
+};
+
+/* CLOSE DROPDOWN ON LINK CLICK */
+drop.querySelectorAll("a").forEach(a=>{
+  a.onclick = () => drop.classList.remove("active");
+});
 
 /* POPUP FORM */
 const overlay = document.getElementById("formOverlay");
