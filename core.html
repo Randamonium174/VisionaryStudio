@@ -546,7 +546,10 @@ if (triMenu && mobileDropdown){
     e.stopPropagation();
     if (!triMenu.classList.contains("rolling")){
       triMenu.classList.add("rolling");
-      dots.forEach(dot => { dot.style.transition = "opacity 0.18s ease, filter 0.18s ease"; dot.style.filter = "blur(2px)"; });
+      dots.forEach(dot => { 
+        dot.style.transition = "opacity 0.18s ease, filter 0.18s ease"; 
+        dot.style.filter = "blur(2px)"; 
+      });
       setTimeout(() => {
         diceState = diceState === 3 ? 1 : diceState + 1;
         renderDiceFace(diceState);
@@ -597,6 +600,7 @@ gsap.utils.toArray(".stack-section").forEach((section) => {
       cards.forEach((card, idx) => {
         card.classList.remove("pos-center","pos-left1","pos-left2","pos-right1","pos-right2");
         let offset = (idx - activeIndex + total) % total;
+
         if (offset === 0) { card.classList.add("pos-center"); card.style.opacity = 1; }
         else if (offset === 1) { card.classList.add("pos-right1"); card.style.opacity = 0.85; }
         else if (offset === 2) { card.classList.add("pos-right2"); card.style.opacity = 0.55; }
@@ -615,20 +619,40 @@ gsap.utils.toArray(".stack-section").forEach((section) => {
     if (nextBtn) nextBtn.addEventListener('click', goNext);
     if (prevBtn) prevBtn.addEventListener('click', goPrev);
 
-    /* 🔥 UPDATED SWIPE SYSTEM — matches landing page */
-    let touchStartX = null;
-    let touchStartY = null;
+    /* 🔥 FIXED SWIPE SYSTEM — behaves exactly like landing page */
+    let touchStartX = 0;
+    let touchStartY = 0;
     let touchActive = false;
+    let isHorizontalSwipe = false;
 
     wrap.addEventListener("touchstart", (e) => {
       const t = e.touches[0];
       touchStartX = t.clientX;
       touchStartY = t.clientY;
       touchActive = true;
-
-      // 🔥 lock horizontal scroll
+      isHorizontalSwipe = false;
       document.body.classList.add("lock-horizontal");
     }, { passive: true });
+
+    wrap.addEventListener("touchmove", (e) => {
+      if (!touchActive) return;
+
+      const t = e.touches[0];
+      const dx = t.clientX - touchStartX;
+      const dy = t.clientY - touchStartY;
+
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      if (!isHorizontalSwipe && absDx > absDy && absDx > 10) {
+        isHorizontalSwipe = true;
+      }
+
+      if (isHorizontalSwipe) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, { passive: false });
 
     wrap.addEventListener("touchend", (e) => {
       if (!touchActive) return;
@@ -646,18 +670,21 @@ gsap.utils.toArray(".stack-section").forEach((section) => {
         else goPrev();
       }
 
-      // 🔥 unlock scroll
       document.body.classList.remove("lock-horizontal");
-
-      touchStartX = null;
-      touchStartY = null;
       touchActive = false;
+      isHorizontalSwipe = false;
     }, { passive: true });
 
-    window.addEventListener('resize', updatePositions);
-  });
-})();
+    wrap.addEventListener("touchcancel", () => {
+      document.body.classList.remove("lock-horizontal");
+      touchActive = false;
+      isHorizontalSwipe = false;
+    });
+
+  }); // END forEach
+})(); // END initStacks IIFE
 </script>
+
 
 </body>
 </html>
