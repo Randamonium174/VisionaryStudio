@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VisionaryStudio — Demo</title>
+
+  <!-- Fonts & GSAP (scripts referenced; JS wiring will be in Part 2) -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;800&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+
+  <style>
+    :root{
+      --vs-gradient: linear-gradient(135deg,#6366F1,#8B5CF6,#EC4899);
+      --vs-bg: #020312;
+      --glass-bg: rgba(0,0,0,0.68);
+      --glass-border: rgba(255,255,255,0.45);
+      --soft-text: rgba(226,232,240,0.92);
+      --muted: rgba(226,232,240,0.55);
+      --card-radius: 32px;
+      --card-padding: 18px;
+      --accent: #8B5CF6;
+      --btn-inactive: rgba(0,0,0,0.72);
+      --card-max-width: 980px;
+    }
+
+    /* Reset */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background:var(--vs-bg);
+      color:white;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow-x:hidden;
+      position:relative;
+    }
+
+    /* Lock background scroll when modal open */
+    body.modal-opened{
+      overflow: hidden;
+      height:100%;
+      position:fixed;
+      width:100%;
+      top:0;
+      left:0;
+    }
+
+    /* Background image */
+    .vs-fixed-bg{
+      position:fixed;inset:0;z-index:-10;
+      background-image:url("https://images.unsplash.com/photo-1517866184231-7ef94c2ea930?q=80&w=1894&auto=format&fit=crop&ixlib=rb-4.1.0");
+      background-size:cover;background-position:center;
+      pointer-events:none;
+    }
+
+    /* NAV */
+    .nav-wrap{position:fixed;top:18px;left:0;right:0;display:flex;justify-content:center;z-index:260}
+    .nav{
+      width:98%;max-width:1350px;height:72px;border-radius:20px;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;
+      background:rgba(0,0,0,0.65);backdrop-filter:blur(16px);
+      border:1px solid rgba(255,255,255,0.7);
+      box-shadow:0 0 18px rgba(255,255,255,0.12),0 18px 60px rgba(0,0,0,0.8);
+    }
+    .brand-wrap{display:flex;align-items:center;gap:12px}
+    .brand-logo{width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.6);box-shadow:0 0 18px rgba(129,140,248,0.9)}
+    .brand{font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.35rem;background:var(--vs-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+    nav.primary{display:flex;gap:34px;align-items:center}
+    nav.primary a{color:white;text-decoration:none;font-family:'Space Grotesk';font-weight:800;font-size:0.9rem;padding:10px 4px;letter-spacing:0.16em;position:relative;transition:.25s}
+    nav.primary a:hover{transform:translateY(-2px);opacity:0.94}
+    nav.primary a::after{content:"";position:absolute;bottom:-6px;left:0;height:2px;width:0%;background:var(--vs-gradient);border-radius:4px;transition:width .3s}
+    nav.primary a:hover::after{width:100%}
+
+    /* Tri-dot menu (mobile) */
+    .tri-menu{display:none;position:relative;width:46px;height:46px;border-radius:14px;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.5);backdrop-filter:blur(12px);cursor:pointer;box-shadow:0 0 18px rgba(129,140,248,0.7);justify-content:center;align-items:center;transition:.3s}
+    .tri-dot{position:absolute;width:8px;height:8px;background:white;border-radius:50%;box-shadow:0 0 8px rgba(255,255,255,0.9)}
+    .tri-dot.dot1{top:50%;left:50%;transform:translate(-50%,-50%)}
+    .tri-dot.dot2{top:11px;left:11px}
+    .tri-dot.dot3{bottom:11px;right:11px}
+
+    /* MOBILE DROPDOWN (single-line style preserved in file, but expanded here) */
+    .mobile-dropdown{position:fixed;top:100px;left:50%;transform:translateX(-50%) translateY(-10px);width:88%;max-width:720px;background:rgba(0,0,0,0.9);backdrop-filter:blur(10px);border-radius:16px;border:1px solid rgba(255,255,255,0.35);padding:12px 0;display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .22s ease, transform .22s ease;z-index:300}
+    .mobile-dropdown.active{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+    .mobile-dropdown a{font-family:'Space Grotesk';font-weight:800;font-size:0.85rem;letter-spacing:0.16em;text-decoration:none;color:white;padding:8px 4px}
+
+    /* Main */
+    main{padding-top:120px;min-height:100vh}
+    .page-wrap{max-width:1150px;margin:0 auto;padding:22px}
+    .header{max-width:900px;margin:0 auto;text-align:center;padding:40px 12px}
+    .kicker{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.12);font-size:.78rem;letter-spacing:.12em;color:#E6E9F8;margin-bottom:18px}
+    .title{font-family:'Space Grotesk';font-weight:800;font-size:clamp(2.6rem,6vw,3.8rem);background:var(--vs-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+    .lead{color:var(--soft-text);max-width:760px;margin:0 auto;font-size:1.02rem}
+
+    /* Cards (center title + desc only) */
+    .demo-stack{display:flex;flex-direction:column;gap:24px;margin-top:36px;align-items:center;padding-bottom:40px}
+    .spotlight{
+      width:100%;max-width:var(--card-max-width);
+      background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:var(--card-radius);
+      padding:var(--card-padding);
+      display:flex;flex-direction:column;gap:14px;
+      box-shadow:0 18px 60px rgba(0,0,0,0.9),0 0 22px rgba(255,255,255,0.06);
+      transition:transform .22s ease, box-shadow .22s ease;
+      overflow:visible;
+      text-align:center; /* center card title/desc */
+      align-items:center;
+    }
+    .spotlight:hover{transform:translateY(-6px);box-shadow:0 30px 90px rgba(0,0,0,1),0 0 34px rgba(129,140,248,0.08)}
+
+    .spotlight-title{
+      font-family:'Space Grotesk';
+      font-weight:800;
+      font-size:1.75rem;
+      background:var(--vs-gradient);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      text-align:center;
+    }
+    .spotlight-desc{
+      color:var(--soft-text);
+      max-width:820px;
+      font-size:1.05rem;
+      line-height:1.5;
+      text-align:center;
+      margin:0 auto;
+    }
+
+    .spotlight-img{width:100%;height:300px;border-radius:20px;overflow:hidden;background:#0b0e1a;border:1px solid rgba(255,255,255,0.03)}
+    .spotlight-img img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.02)}
+
+    .card-cta-wrap{width:100%;display:flex;justify-content:center;margin-top:8px}
+    .try-btn{
+      padding:12px 18px;border-radius:999px;border:1px solid rgba(255,255,255,0.85);
+      background:var(--btn-inactive);color:white;font-weight:800;cursor:pointer;letter-spacing:0.12em;text-transform:uppercase;
+      transition:transform .18s,box-shadow .18s;
+      position:relative;
+      overflow:hidden;
+    }
+    .try-btn:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,0.6)}
+    .try-btn::before{
+      content:"";
+      position:absolute;inset:0;background:linear-gradient(135deg,#6366F1,#8B5CF6,#EC4899);opacity:0;transform:scale(1.2) rotate(8deg);transition:all .34s ease;z-index:0;
+    }
+    .try-btn:hover::before{opacity:1;transform:scale(1) rotate(0deg)}
+    .try-btn > span{position:relative;z-index:2}
+
+    /* ========== MODAL CORE (UPDATED for full-screen mobile) ========== */
+    .modal-overlay{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:0;background:linear-gradient(180deg,rgba(0,0,0,0.68),rgba(0,0,0,0.72));backdrop-filter:blur(12px)}
+    .modal-open{display:flex}
+    /* desktop modal kept for >=980px; mobile will be full-screen via CSS below */
+    .modal{width:100%;max-width:1100px;height:86vh;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.12);box-shadow:0 24px 80px rgba(0,0,0,0.85);overflow:hidden;display:grid;grid-template-columns:420px 1fr}
+    @media (max-width:980px){
+      .modal{
+        grid-template-columns:1fr;
+        height:100vh;
+        max-width:100%;
+        border-radius:0;
+        display:flex;
+        flex-direction:column;
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+        padding-top:66px; /* space for fixed X */
+      }
+      .modal-overlay{align-items:flex-start}
+    }
+
+    .modal-left{padding:28px;border-right:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:16px;background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.008));text-align:left}
+    .modal-left h3{font-family:'Space Grotesk';font-size:1.05rem;margin-bottom:4px;text-align:left}
+    .input-label{font-size:.85rem;color:var(--muted);margin-bottom:10px;text-align:left}
+    .input-large{width:100%;min-height:120px;border-radius:12px;padding:12px 14px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.04);color:var(--soft-text);resize:vertical;font-size:.95rem}
+    .input-line{width:100%;height:44px;border-radius:10px;padding:10px 12px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.04);color:var(--soft-text);font-size:.95rem}
+    .small-note{font-size:.78rem;color:var(--muted);margin-top:6px}
+
+    /* chips (left-aligned inside modal-left) */
+    .chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+    .chip{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);cursor:pointer;font-weight:700;color:var(--soft-text);font-size:.9rem;transition:all .22s}
+    .chip.active{background:linear-gradient(90deg,rgba(139,92,246,0.95),rgba(236,72,153,0.92));border:1px solid rgba(255,255,255,0.22);box-shadow:0 8px 30px rgba(139,92,246,0.12);color:white;transform:translateY(-2px)}
+
+    .modal-right{padding:22px;display:flex;flex-direction:column;gap:12px;position:relative}
+    .meta{display:flex;gap:12px;align-items:center;justify-content:center}
+    .meta .tag{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);font-weight:700;color:var(--muted)}
+    .result-box{flex:1;border-radius:12px;padding:18px;background:linear-gradient(180deg,rgba(0,0,0,0.28),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,0.75)}
+    .sim-output{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;background:rgba(0,0,0,0.22);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);color:#E6EEFF;white-space:pre-wrap;min-height:140px;overflow:auto}
+
+    .modal-actions{display:flex;gap:12px;align-items:center;justify-content:flex-end;margin-top:8px}
+    .action-btn{padding:10px 14px;border-radius:12px;font-weight:700;border:1px solid rgba(255,255,255,0.06);background:transparent;cursor:pointer;position:relative;overflow:hidden}
+    .action-cta{background:var(--vs-gradient);border:1px solid rgba(255,255,255,0.12);Color:white;padding:12px 18px;border-radius:12px;font-weight:800;cursor:pointer}
+
+    /* gradient-outline reset button */
+    .action-btn.gradient-outline{
+      color:transparent;
+      background-image: var(--vs-gradient);
+      -webkit-background-clip: text;
+      font-weight:900;
+      border: 2px solid transparent;
+    }
+    .action-btn.gradient-outline::before{
+      content:"";
+      position:absolute;inset:0;border-radius:12px;padding:2px;background:var(--vs-gradient);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      pointer-events:none;
+    }
+
+    /* Close button (base style) — fixed on mobile, absolute in desktop */
+    .modal-close{position:absolute;right:18px;top:18px;width:42px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);display:grid;place-items:center;cursor:pointer;background:rgba(0,0,0,0.2);z-index:60}
+    .modal-close svg{width:18px;height:18px;opacity:.95}
+    @media (max-width:980px){
+      .modal-close{
+        position:fixed;
+        top:12px;
+        right:12px;
+        width:44px;
+        height:44px;
+        border-radius:12px;
+        z-index:9999;
+      }
+    }
+
+    /* Error styles for empty input validation */
+    .input-error{
+      border-color: #ff3b3b !important;
+      box-shadow: 0 0 12px rgba(255, 59, 59, 0.45);
+    }
+    .error-text{
+      color: #ff6b6b;
+      font-size: 0.86rem;
+      margin-top: 8px;
+      font-weight: 700;
+    }
+
+    /* Mobile fix — keep X aligned top-right near title */
+    @media (max-width: 980px) {
+      /* ensure modal-left title has room for X */
+      .modal-left h3{padding-right:56px}
+      /* adjust nav padding */
+      .nav{padding:8px 14px}
+      .spotlight-img{height:220px}
+      .modal{height:100vh}
+      .modal-left{padding:16px}
+      .modal-right{padding:16px}
+      .modal-actions{justify-content:center;flex-wrap:wrap}
+    }
+
+    @media (max-width:900px){
+      nav.primary{display:none}
+      .tri-menu{display:flex}
+      /* Removed previous override that pushed mobile-dropdown to top:88px
+         so the dropdown stays at top:190px (clears nav shadow) */
+      .page-wrap{padding:12px}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="vs-fixed-bg" aria-hidden="true"></div>
+
+  <!-- NAV -->
+  <div class="nav-wrap" role="banner">
+    <header class="nav">
+      <div class="brand-wrap" aria-hidden="true">
+        <img src="vs.png" alt="VisionaryStudio logo" class="brand-logo">
+        <div class="brand">VisionaryStudio</div>
+      </div>
+
+      <nav class="primary" aria-label="Primary">
+        <a href="index.html">HOME</a>
+        <a href="core.html">CORE</a>
+        <a href="connect.html">CONTACT</a>
+
+      </nav>
+
+      <button class="tri-menu" id="triMenuButton" aria-label="Toggle menu" title="Menu">
+        <div class="tri-dot dot1"></div>
+        <div class="tri-dot dot2"></div>
+        <div class="tri-dot dot3"></div>
+      </button>
+    </header>
+  </div>
+
+  <!-- MOBILE DROPDOWN -->
+  <div class="mobile-dropdown" id="mobileDropdown" aria-hidden="true">
+    <a href="index.html">HOME</a>
+    <a href="core.html">CORE</a>
+    <a href="connect.html">CONTACT</a>
+  </div>
+
+  <main id="top">
+    <div class="page-wrap">
+      <header class="header" role="banner">
+        <div class="kicker"><span class="dot" aria-hidden="true"></span> AI STRATEGY · BRAND · VALIDATION</div>
+        <h1 class="title">Simulated Demo — VisionaryStudio</h1>
+        <p class="lead">Try three quick, focused simulations. Each demo uses your input to generate tailored suggestions — not pre-canned lines.</p>
+      </header>
+
+      <section id="demos" class="demo-stack" aria-label="Demo cards">
+
+        <!-- Spotlight Card: Idea -->
+        <div class="spotlight" id="cardIdea">
+          <div class="spotlight-title">Idea Simulation</div>
+          <div class="spotlight-desc">Turn a short idea sentence into a sharper identity: core value, target micro-audience, and a suggested next-step experiment.</div>
+          <div class="spotlight-img" aria-hidden="true">
+            <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Futuristic UI holographic visual">
+          </div>
+          <div class="card-cta-wrap">
+            <button class="try-btn" data-target="modalIdea"><span>TRY DEMO</span></button>
+          </div>
+        </div>
+
+        <!-- Spotlight Card: Product -->
+        <div class="spotlight" id="cardProduct">
+          <div class="spotlight-title">Product Simulation</div>
+          <div class="spotlight-desc">Paste a short product description or URL: receive a compact audit, top friction points, and a prioritized 1–3 action plan.</div>
+          <div class="spotlight-img" aria-hidden="true">
+            <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Holographic product concept">
+          </div>
+          <div class="card-cta-wrap">
+            <button class="try-btn" data-target="modalProduct"><span>TRY DEMO</span></button>
+          </div>
+        </div>
+
+        <!-- Spotlight Card: Market -->
+        <div class="spotlight" id="cardMarket">
+          <div class="spotlight-title">Market Simulation</div>
+          <div class="spotlight-desc">Enter an industry or keyword: the demo scans signals and returns demand indicators, gaps, and a pilot suggestion.</div>
+          <div class="spotlight-img" aria-hidden="true">
+            <img src="https://images.unsplash.com/photo-1535223289827-42f1e9919769?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Signals & trends visualization">
+          </div>
+          <div class="card-cta-wrap">
+            <button class="try-btn" data-target="modalMarket"><span>TRY DEMO</span></button>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <!-- IDEA MODAL -->
+  <div class="modal-overlay" id="modalIdea" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="ideaTitle">
+    <div class="modal" role="document">
+      <div class="modal-left">
+        <h3 id="ideaTitle">Idea Simulation</h3>
+        <div>
+          <div class="input-label">Describe the idea (one short sentence)</div>
+          <textarea id="ideaInput" class="input-large" placeholder="Example: 'A modular notebook app for student note workflows.'"></textarea>
+          <div class="small-note">Keep it concise. The simulation will expand and propose audience & next steps.</div>
+        </div>
+
+        <div>
+          <div class="input-label" style="margin-top:8px">Choose audience</div>
+          <div class="chips" id="ideaAudience">
+            <div class="chip active" data-value="creators">Creators</div>
+            <div class="chip" data-value="founders">Founders</div>
+            <div class="chip" data-value="students">Students</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="input-label" style="margin-top:8px">Tone</div>
+          <div class="chips" id="ideaTone">
+            <div class="chip active" data-value="clarity">Clarity</div>
+            <div class="chip" data-value="edgy">Edgy</div>
+            <div class="chip" data-value="luxury">Luxury</div>
+          </div>
+        </div>
+
+        <div class="hint" style="margin-top:auto">This is a simulated preview intended to surface useful directions quickly.</div>
+      </div>
+
+      <div class="modal-right">
+        <div class="meta">
+          <div class="tag">Idea preview</div>
+          <div class="tag" id="ideaStatus">Ready</div>
+        </div>
+
+        <div class="result-box" aria-live="polite" id="ideaResultBox">
+          <div class="sim-line muted">Analysis timeline: <span class="muted">—</span></div>
+          <div class="sim-output" id="ideaOutput"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="action-btn gradient-outline" id="ideaReset">Reset</button>
+          <button class="action-cta" id="ideaRun">Run demo</button>
+        </div>
+
+        <!-- keep X on the right side for phone sizes (CSS in Part1 handles positioning) -->
+        <button class="modal-close" id="closeIdea" aria-label="Close Idea modal">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M6 18L18 6" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRODUCT MODAL -->
+  <div class="modal-overlay" id="modalProduct" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="productTitle">
+    <div class="modal" role="document">
+      <div class="modal-left">
+        <h3 id="productTitle">Product Simulation</h3>
+
+        <div>
+          <div class="input-label">Paste product URL or short description</div>
+          <input id="productInput" class="input-line" placeholder="e.g., 'SaaS for small restaurants — reservations + ordering'">
+          <div class="small-note">A short description is enough to produce an audit snapshot.</div>
+        </div>
+
+        <div>
+          <div class="input-label" style="margin-top:8px">Current focus</div>
+          <div class="chips" id="productFocus">
+            <div class="chip active" data-value="growth">Growth</div>
+            <div class="chip" data-value="retention">Retention</div>
+            <div class="chip" data-value="branding">Branding</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="input-label" style="margin-top:8px">Audience lens</div>
+          <div class="chips" id="productLens">
+            <div class="chip active" data-value="consumer">Consumer</div>
+            <div class="chip" data-value="b2b">B2B</div>
+            <div class="chip" data-value="creators">Creators</div>
+          </div>
+        </div>
+
+        <div class="hint" style="margin-top:auto">Outputs are directional — use them as starting hypotheses.</div>
+      </div>
+
+      <div class="modal-right">
+        <div class="meta">
+          <div class="tag">Product preview</div>
+          <div class="tag" id="productStatus">Ready</div>
+        </div>
+
+        <div class="result-box" id="productResultBox">
+          <div class="sim-line muted">Snapshot: <span class="muted">Quick audit</span></div>
+          <div class="sim-output" id="productOutput"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="action-btn gradient-outline" id="productReset">Reset</button>
+          <button class="action-cta" id="productRun">Run demo</button>
+        </div>
+
+        <button class="modal-close" id="closeProduct" aria-label="Close Product modal">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M6 18L18 6" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARKET MODAL -->
+  <div class="modal-overlay" id="modalMarket" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="marketTitle">
+    <div class="modal" role="document">
+      <div class="modal-left">
+        <h3 id="marketTitle">Market / Statistics Simulation</h3>
+
+        <div>
+          <div class="input-label">Industry or keyword</div>
+          <input id="marketInput" class="input-line" placeholder="e.g., 'remote collaboration'">
+          <div class="small-note">Use a short keyword or phrase to get a signal snapshot.</div>
+        </div>
+
+        <div>
+          <div class="input-label" style="margin-top:8px">Market type</div>
+          <div class="chips" id="marketType">
+            <div class="chip active" data-value="emerging">Emerging</div>
+            <div class="chip" data-value="established">Established</div>
+            <div class="chip" data-value="niche">Niche</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="input-label" style="margin-top:8px">Region lens</div>
+          <div class="chips" id="marketRegion">
+            <div class="chip active" data-value="global">Global</div>
+            <div class="chip" data-value="apac">APAC</div>
+            <div class="chip" data-value="eu">EU</div>
+          </div>
+        </div>
+
+        <div class="hint" style="margin-top:auto">This simulation surfaces likely trends and opportunity ideas quickly.</div>
+      </div>
+
+      <div class="modal-right">
+        <div class="meta">
+          <div class="tag">Market preview</div>
+          <div class="tag" id="marketStatus">Ready</div>
+        </div>
+
+        <div class="result-box" id="marketResultBox">
+          <div class="sim-line muted">Signals: <span class="muted">analysis in progress</span></div>
+          <div class="sim-output" id="marketOutput"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="action-btn gradient-outline" id="marketReset">Reset</button>
+          <button class="action-cta" id="marketRun">Run demo</button>
+        </div>
+
+        <button class="modal-close" id="closeMarket" aria-label="Close Market modal">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M6 18L18 6" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    © <span id="year"></span> VisionaryStudio — Built for creators, founders & brands.
+  </footer>
+
+  <!-- SCRIPT: full wiring (runs after DOM) -->
+  <script>
+  (function(){
+    // wait until DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+
+      /* Utilities */
+      const byId = id => document.getElementById(id);
+      const now = () => new Date().toISOString();
+
+      /* Auto year */
+      const yearEl = byId('year'); if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+      /* GSAP already loaded (deferred in head) -- register plugin if available */
+      if (window.gsap && window.gsap.registerPlugin) {
+        try { gsap.registerPlugin(window.ScrollTrigger); } catch(e){}
+      }
+
+      /* ===== tri-dot mobile menu ===== */
+      const triMenu = document.getElementById("triMenuButton");
+      const mobileDropdown = document.getElementById("mobileDropdown");
+      const dots = triMenu ? triMenu.querySelectorAll(".tri-dot") : [];
+      let diceState = 1;
+
+      function renderDiceFace(num){
+        if (!dots || !dots.length) return;
+        dots.forEach(d => d.style.opacity = 0);
+        if (num === 1) dots.forEach(d => { if (d.classList.contains('dot1')) d.style.opacity = 1; });
+        if (num === 2) dots.forEach(d => { if (d.classList.contains('dot2')||d.classList.contains('dot3')) d.style.opacity = 1; });
+        if (num === 3) dots.forEach(d => d.style.opacity = 1);
+      }
+      renderDiceFace(diceState);
+
+      if (triMenu && mobileDropdown){
+        triMenu.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!triMenu.classList.contains("rolling")){
+            triMenu.classList.add("rolling");
+            dots.forEach(dot => { dot.style.filter = "blur(2px)"; });
+            setTimeout(()=> {
+              diceState = diceState === 3 ? 1 : diceState + 1;
+              renderDiceFace(diceState);
+              dots.forEach(dot => { dot.style.filter = "blur(0)"; });
+            },180);
+            setTimeout(()=> triMenu.classList.remove('rolling'),450);
+          }
+          triMenu.classList.toggle('open');
+          mobileDropdown.classList.toggle('active');
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!triMenu.contains(e.target) && !mobileDropdown.contains(e.target)){
+            triMenu.classList.remove("open");
+            mobileDropdown.classList.remove("active");
+          }
+        });
+      }
+
+      /* ===== small reveal on scroll for spotlight cards (if gsap available) ===== */
+      if (window.gsap && gsap.utils && gsap.utils.toArray){
+        gsap.utils.toArray(".spotlight").forEach((el, i) => {
+          gsap.fromTo(el, {y: 36, opacity: 0}, {
+            y: 0, opacity: 1, duration: 0.8, ease: "power3.out", delay: i*0.08,
+            scrollTrigger: { trigger: el, start: "top 92%" }
+          });
+        });
+      }
+
+      /* ===== chips wiring (single active) ===== */
+      function wireChips(containerId){
+        const wrap = byId(containerId);
+        if (!wrap) return;
+        wrap.querySelectorAll('.chip').forEach(chip=>{
+          chip.addEventListener('click',()=>{
+            wrap.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+            chip.classList.add('active');
+          });
+        });
+      }
+      ['ideaAudience','ideaTone','productFocus','productLens','marketType','marketRegion'].forEach(wireChips);
+
+      /* ===== typing effect utility ===== */
+      function typeInto(el, text, opts = {}) {
+        const { speed = 16, delay = 0 } = opts;
+        el.textContent = '';
+        let i = 0;
+        return new Promise(resolve => {
+          setTimeout(() => {
+            const ticker = setInterval(() => {
+              if (i >= text.length) {
+                clearInterval(ticker);
+                resolve();
+                return;
+              }
+              el.textContent += text[i];
+              i++;
+              el.scrollTop = el.scrollHeight;
+            }, speed);
+          }, delay);
+        });
+      }
+
+      /* ===== modal open/close helpers (with body lock) ===== */
+      function openModal(modalEl){
+        if (!modalEl) return;
+        modalEl.classList.add('modal-open');
+        modalEl.setAttribute('aria-hidden','false');
+
+        // lock body scroll safely (preserve scroll position)
+        const scrollY = window.scrollY || document.documentElement.scrollTop;
+        document.body.style.top = `-${scrollY}px`;
+        document.body.classList.add('modal-opened');
+
+        const modal = modalEl.querySelector('.modal');
+        if (window.gsap) {
+          gsap.fromTo(modal,{y:30,opacity:0,scale:0.98},{y:0,opacity:1,scale:1,duration:0.42,ease:"power3.out"});
+        }
+
+        // focus first input/button after a small delay
+        setTimeout(()=> {
+          const input = modalEl.querySelector('textarea, input, button');
+          if (input) input.focus();
+        },420);
+
+        // trap focus
+        trapFocus(modalEl);
+      }
+      function closeModal(modalEl){
+        if (!modalEl) return;
+        const modal = modalEl.querySelector('.modal');
+        if (window.gsap) {
+          gsap.to(modal,{y:18,opacity:0,scale:0.99,duration:0.28,ease:"power2.in",onComplete:()=>{
+            modalEl.classList.remove('modal-open');
+            modalEl.setAttribute('aria-hidden','true');
+            // restore body scroll
+            const top = document.body.style.top || '';
+            document.body.classList.remove('modal-opened');
+            document.body.style.top = '';
+            if (top){
+              const scrollY = -parseInt(top || '0');
+              window.scrollTo(0, scrollY);
+            }
+          }});
+        } else {
+          modalEl.classList.remove('modal-open');
+          modalEl.setAttribute('aria-hidden','true');
+          const top = document.body.style.top || '';
+          document.body.classList.remove('modal-opened');
+          document.body.style.top = '';
+          if (top){
+            const scrollY = -parseInt(top || '0');
+            window.scrollTo(0, scrollY);
+          }
+        }
+      }
+
+      /* open modals via CTA buttons */
+      document.querySelectorAll('.try-btn').forEach(btn=>{
+        btn.addEventListener('click',(e)=>{
+          const tgt = btn.dataset.target;
+          if (!tgt) return;
+          const el = document.getElementById(tgt);
+          openModal(el);
+        });
+      });
+
+      /* close modal by clicking overlay or close button */
+      ['modalIdea','modalProduct','modalMarket'].forEach(id => {
+        const mod = byId(id);
+        if (!mod) return;
+        mod.addEventListener('click', (e) => {
+          if (e.target === mod) closeModal(mod);
+        });
+      });
+      ['closeIdea','closeProduct','closeMarket'].forEach(id => {
+        const btn = byId(id);
+        if (!btn) return;
+        btn.addEventListener('click', ()=> {
+          const overlay = btn.closest('.modal-overlay');
+          closeModal(overlay);
+        });
+      });
+      window.addEventListener('keydown',(e)=>{
+        if (e.key === 'Escape') {
+          ['modalIdea','modalProduct','modalMarket'].forEach(id=>{
+            const m = byId(id);
+            if (m && m.classList.contains('modal-open')) closeModal(m);
+          });
+        }
+      });
+
+      /* basic focus trap */
+      function trapFocus(modalEl){
+        if (!modalEl) return;
+        const focusables = modalEl.querySelectorAll('button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])');
+        if (!focusables.length) return;
+        const first = focusables[0], last = focusables[focusables.length-1];
+        function keyHandler(e){
+          if (e.key !== 'Tab') return;
+          if (e.shiftKey){
+            if (document.activeElement === first){ e.preventDefault(); last.focus(); }
+          } else {
+            if (document.activeElement === last){ e.preventDefault(); first.focus(); }
+          }
+        }
+        // remove previous listeners to avoid duplicates
+        modalEl.removeEventListener('keydown', modalEl._focusHandler || (()=>{}));
+        modalEl._focusHandler = keyHandler;
+        modalEl.addEventListener('keydown', modalEl._focusHandler);
+      }
+
+      /* ===== simulation helper functions (same as earlier) ===== */
+      function extractKeywords(text){
+        if (!text) return [];
+        const cleaned = text.replace(/[^\w\s]/g,' ').toLowerCase();
+        const words = cleaned.split(/\s+/).filter(Boolean);
+        const stop = new Set(['the','a','an','for','to','and','of','in','with','on','is','it','its','your','by','our','this','that','as','we']);
+        const freq = {};
+        words.forEach(w => { if (!stop.has(w) && w.length>2) freq[w] = (freq[w]||0) + 1; });
+        const keys = Object.keys(freq).sort((a,b)=> freq[b]-freq[a] || b.length - a.length);
+        return keys.slice(0,4);
+      }
+      function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+      function generateIdeaOutput({input, audience, tone}){
+        const base = input && input.trim() ? input.trim() : "A concise product idea";
+        const kws = extractKeywords(base);
+        const audMap = { creators: "Creators & Makers", founders: "Early-stage Founders", students: "Students & Learners" };
+        const toneMap = { clarity: "clarity-first", edgy: "bold-edgy", luxury: "luxury-minimal" };
+
+        const mainLine = `Core concept: ${base}.`;
+        const focus = kws.length ? `Focus keywords: ${kws.join(', ')}.` : "Focus keywords: discovery, core value.";
+        const audienceLine = `Primary audience: ${audMap[audience]}.`;
+        const identity = `Identity hint: ${pick([
+          `Use a bold wordmark and a single accent color to emphasize ${kws[0] || 'core value'}.`,
+          `Lean into a minimalist, modular identity — focus on components over features.`,
+          `Showcase real user workflows in the hero to demonstrate the value quickly.`
+        ])}`;
+        const risks = `Blind spots: ${pick([
+          `Early discoverability — run 10 quick interviews to validate language.`,
+          `Pricing signal untested — A/B price messaging with two cohorts.`,
+          `Narrow initial targeting needed — avoid broad 'everyone' positioning.`
+        ])}`;
+        const next = `Suggested next step: ${pick([
+          `Build a one-page pilot landing with a single CTA and an embedded sign-up experiment.`,
+          `Prototype a 3-screen onboarding flow and test with 12 users from ${audMap[audience]}.`,
+          `Create a short 60s explainer video focusing only on the main value prop.`
+        ])}`;
+
+        const toneNote = `Tone: ${toneMap[tone]}.`;
+        const score = `Confidence score: ${(6 + Math.min(kws.length,3)).toFixed(1)} / 10`;
+
+        return [mainLine, '', audienceLine, toneNote, '', focus, identity, '', risks, '', next, '', score].join('\n');
+      }
+
+      function generateProductOutput({input, focus, lens}){
+        const base = input && input.trim() ? input.trim() : "Your product";
+        const kws = extractKeywords(base);
+        const lensMap = { consumer: "consumer users", b2b: "B2B decision-makers", creators: "creative professionals" };
+        const focusMap = { growth: "growth", retention: "retention", branding: "brand clarity" };
+
+        const headline = `Product snapshot — "${base}"`;
+        const position = `Positioning: ${pick([
+          `Differentiates by workflow simplicity compared to competitors.`,
+          `Looks feature-rich but lacks a clear onboarding path.`,
+          `Strong functionality; messaging could be tightened for conversion.`
+        ])}`;
+        const strengths = `Strengths: ${pick([
+          `Core feature set aligns with ${lensMap[lens]}.`,
+          `Clean UI components that map to common tasks.`,
+          `Solid technical foundation — good for integrations.`
+        ])}`;
+        const friction = `Top friction: ${pick([
+          `Long onboarding with too many choices at start.`,
+          `Hero copy doesn't directly answer 'what problem' this solves.`,
+          `No clear pricing signals for first-time users.`
+        ])}`;
+        const quickWins = `Quick wins:\n1) Simplify onboarding -> reduce steps by 30%.\n2) Tighten hero messaging to a single job-to-be-done.\n3) Add one identity cue (color/type) across marketing.`;
+        const priority = `Priority focus: ${focusMap[focus]}.`;
+        const experiment = `Suggested experiment: A/B test two hero narratives targeted at ${lensMap[lens]}.`;
+        const score = `Health score: ${(5.5 + Math.min(kws.length,3)).toFixed(1)} / 10`;
+
+        return [headline, '', position, strengths, '', friction, '', quickWins, '', priority, '', experiment, '', score].join('\n');
+      }
+
+      function generateMarketOutput({input, type, region}){
+        const base = input && input.trim() ? input.trim() : "the market";
+        const kws = extractKeywords(base);
+        const typeMap = { emerging: "Emerging", established: "Established", niche: "Niche" };
+        const regionMap = { global: "Global", apac: "APAC", eu: "EU" };
+
+        const header = `Market scan — "${base}"`;
+        const category = `Category: ${typeMap[type]} | Lens: ${regionMap[region]}`;
+        const demand = `Demand signals: ${pick([
+          `Moderate ↑ over last 12 months — early adopters showing interest.`,
+          `Steady search volume with seasonal spikes tied to enterprise budgets.`,
+          `Patchy signals — strong micro-communities but few productized offerings.`
+        ])}`;
+        const gaps = `Opportunity gaps: ${pick([
+          `Productized onboarding & vertical content for ${regionMap[region]}.`,
+          `Under-served middle-market customers who need simpler pricing.`,
+          `Localized integrations and support could open quick adoption.`
+        ])}`;
+        const trendScore = `Trend alignment score: ${(6.0 + Math.min(kws.length,3)).toFixed(1)} / 10`;
+        const pilot = `Pilot recommendation: Run a 6-week vertical pilot targeting a single buyer persona to de-risk expansion.`;
+        const signals = `Signals to watch: ${kws.length ? kws.join(', ') : 'community growth, search interest'}.`;
+
+        return [header, '', category, '', demand, '', gaps, '', 'Signals: ' + signals, '', 'Hint: ' + pilot, '', 'Trend score: ' + trendScore].join('\n');
+      }
+
+      /* ===== utility: show empty input error with visual feedback ===== */
+      function showEmptyError(inputEl, message){
+        // remove existing error text
+        const existing = inputEl.parentNode.querySelector('.error-text');
+        if (existing) existing.remove();
+
+        // add error class for red border
+        inputEl.classList.add('input-error');
+
+        // create error note
+        const note = document.createElement('div');
+        note.className = 'error-text';
+        note.textContent = message || 'Please enter a value.';
+        inputEl.parentNode.appendChild(note);
+
+        // small shake animation if gsap present
+        if (window.gsap){
+          const target = inputEl;
+          gsap.fromTo(target, {x:-6}, {x:6, duration:0.06, repeat:5, yoyo:true, onComplete: ()=> gsap.to(target,{x:0,duration:0.06})});
+        }
+
+        // remove error highlight after delay
+        setTimeout(()=> {
+          inputEl.classList.remove('input-error');
+        }, 1400);
+      }
+
+      /* ===== wiring RUN + RESET for Idea with validation ===== */
+      const ideaRunBtn = byId('ideaRun');
+      const ideaResetBtn = byId('ideaReset');
+      const ideaInputEl = byId('ideaInput');
+      const ideaOutputEl = byId('ideaOutput');
+      const ideaStatusEl = byId('ideaStatus');
+
+      ideaRunBtn.addEventListener('click', async () => {
+        // validate non-empty
+        const txt = ideaInputEl.value.trim();
+        if (!txt){
+          showEmptyError(ideaInputEl, 'Please enter an idea before running the simulation.');
+          return;
+        }
+
+        // run simulation
+        ideaOutputEl.textContent = '';
+        ideaStatusEl.textContent = 'Running…';
+        await typeInto(ideaOutputEl, "Analyzing input…\n", {speed:18});
+        await new Promise(r=>setTimeout(r,220));
+        const audience = byId('ideaAudience').querySelector('.chip.active')?.dataset.value || 'creators';
+        const tone = byId('ideaTone').querySelector('.chip.active')?.dataset.value || 'clarity';
+        const result = generateIdeaOutput({input: txt, audience, tone});
+        await typeInto(ideaOutputEl, "\n" + result, {speed:14, delay:120});
+        ideaStatusEl.textContent = 'Complete';
+      });
+
+      ideaResetBtn.addEventListener('click', ()=>{
+        ideaInputEl.value = '';
+        ideaOutputEl.textContent = '';
+        ideaStatusEl.textContent = 'Ready';
+        // remove error if any
+        const err = ideaInputEl.parentNode.querySelector('.error-text');
+        if (err) err.remove();
+        ideaInputEl.classList.remove('input-error');
+      });
+
+      /* ===== wiring RUN + RESET for Product with validation ===== */
+      const productRunBtn = byId('productRun');
+      const productResetBtn = byId('productReset');
+      const productInputEl = byId('productInput');
+      const productOutputEl = byId('productOutput');
+      const productStatusEl = byId('productStatus');
+
+      productRunBtn.addEventListener('click', async () => {
+        const txt = productInputEl.value.trim();
+        if (!txt){
+          showEmptyError(productInputEl, 'Please enter a product description or URL.');
+          return;
+        }
+        productOutputEl.textContent = '';
+        productStatusEl.textContent = 'Running…';
+        await typeInto(productOutputEl, "Scanning product signals…\n", {speed:18});
+        await new Promise(r=>setTimeout(r,260));
+        const focus = byId('productFocus').querySelector('.chip.active')?.dataset.value || 'growth';
+        const lens = byId('productLens').querySelector('.chip.active')?.dataset.value || 'consumer';
+        const result = generateProductOutput({input: txt, focus, lens});
+        await typeInto(productOutputEl, "\n" + result, {speed:14, delay:120});
+        productStatusEl.textContent = 'Complete';
+      });
+
+      productResetBtn.addEventListener('click', ()=>{
+        productInputEl.value = '';
+        productOutputEl.textContent = '';
+        productStatusEl.textContent = 'Ready';
+        const err = productInputEl.parentNode.querySelector('.error-text');
+        if (err) err.remove();
+        productInputEl.classList.remove('input-error');
+      });
+
+      /* ===== wiring RUN + RESET for Market with validation ===== */
+      const marketRunBtn = byId('marketRun');
+      const marketResetBtn = byId('marketReset');
+      const marketInputEl = byId('marketInput');
+      const marketOutputEl = byId('marketOutput');
+      const marketStatusEl = byId('marketStatus');
+
+      marketRunBtn.addEventListener('click', async () => {
+        const txt = marketInputEl.value.trim();
+        if (!txt){
+          showEmptyError(marketInputEl, 'Please enter an industry or keyword.');
+          return;
+        }
+        marketOutputEl.textContent = '';
+        marketStatusEl.textContent = 'Running…';
+        await typeInto(marketOutputEl, "Scanning signals & trends…\n", {speed:18});
+        await new Promise(r=>setTimeout(r,300));
+        const type = byId('marketType').querySelector('.chip.active')?.dataset.value || 'emerging';
+        const region = byId('marketRegion').querySelector('.chip.active')?.dataset.value || 'global';
+        const result = generateMarketOutput({input: txt, type, region});
+        await typeInto(marketOutputEl, "\n" + result, {speed:14, delay:120});
+        marketStatusEl.textContent = 'Complete';
+      });
+
+      marketResetBtn.addEventListener('click', ()=>{
+        marketInputEl.value = '';
+        marketOutputEl.textContent = '';
+        marketStatusEl.textContent = 'Ready';
+        const err = marketInputEl.parentNode.querySelector('.error-text');
+        if (err) err.remove();
+        marketInputEl.classList.remove('input-error');
+      });
+
+      /* small GSAP header reveal (optional if gsap present) */
+      if (window.gsap){
+        try {
+          gsap.from('.header',{y:18,opacity:0,duration:0.8,ease:'power3.out',stagger:.05,delay:0.08});
+        } catch(e){}
+      }
+
+    }); // DOMContentLoaded
+  })();
+  </script>
+
+</body>
+</html>

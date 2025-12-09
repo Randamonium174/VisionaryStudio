@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>VisionaryStudio — Connect</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;800&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+<style>
+/* -----------------------------------------------------------
+   ROOT + RESET
+----------------------------------------------------------- */
+:root{
+  --vs-gradient: linear-gradient(135deg,#6366F1,#8B5CF6,#EC4899);
+  --glass-bg: rgba(0,0,0,0.55);
+  --glass-border: rgba(255,255,255,0.10);
+  --soft-text: rgba(226,232,240,0.88);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:Inter,sans-serif;
+  background:#020204;
+  color:white;
+  overflow-x:hidden;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+/* -----------------------------------------------------------
+   BACKGROUND
+----------------------------------------------------------- */
+.connect-bg{
+  position:fixed;inset:0;z-index:-10;
+  background-image:url("https://images.unsplash.com/photo-1614726365952-510103b1bbb4?q=80&w=1548&auto=format&fit=crop");
+  background-size:cover;background-position:center;
+  filter:brightness(.33);
+}
+@media(max-width:900px){
+  .connect-bg{
+    background-image:url("https://plus.unsplash.com/premium_photo-1679756378826-08c718cd4f0e?q=80&w=838&auto=format&fit=crop");
+    background-position:center top;
+  }
+}
+
+/* -----------------------------------------------------------
+   NAVIGATION (CLEAN VERSION — ONLY HOVER UNDERLINE)
+----------------------------------------------------------- */
+.nav-wrap{
+  position:fixed;top:18px;left:0;right:0;
+  display:flex;justify-content:center;
+  z-index:200;
+}
+
+.nav{
+  width:98%;max-width:1350px;
+  height:72px;border-radius:20px;
+  padding:10px 24px;
+  background:rgba(0,0,0,0.65);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.08);
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+/* BRAND */
+.brand-wrap{display:flex;align-items:center;gap:10px}
+.brand-logo{
+  width:44px;height:44px;border-radius:50%;
+  background:rgba(255,255,255,0.06);
+}
+.brand{
+  font-family:'Space Grotesk';font-weight:800;
+  font-size:1.35rem;
+  background:var(--vs-gradient);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+
+/* DESKTOP LINKS */
+nav.primary{
+  display:flex;gap:34px;align-items:center;
+}
+
+nav.primary a{
+  color:white;text-decoration:none;
+  font-family:'Space Grotesk';
+  font-weight:800;font-size:0.9rem;
+  letter-spacing:0.16em;
+  position:relative;
+  padding:10px 4px;
+  transition:.25s;
+}
+
+nav.primary a:hover{
+  transform:translateY(-2px);
+  opacity:0.9;
+}
+
+/* GRADIENT UNDERLINE ON HOVER (FINAL) */
+nav.primary a::after{
+  content:"";
+  position:absolute;
+  left:0;bottom:-6px;
+  width:0%;height:2.4px;
+  background:var(--vs-gradient);
+  border-radius:999px;
+  box-shadow:0 0 10px rgba(236,72,153,0.55);
+  transition:width .35s ease;
+}
+
+nav.primary a:hover::after{
+  width:100%;
+}
+
+/* MOBILE TRI MENU */
+.tri-menu{
+  display:none;width:46px;height:46px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.15);
+  background:rgba(0,0,0,0.65);
+  justify-content:center;align-items:center;
+}
+.tri-dot{position:absolute;width:8px;height:8px;background:white;border-radius:50%}
+.dot1{top:50%;left:50%;transform:translate(-50%,-50%)}
+.dot2{top:11px;left:11px}
+.dot3{bottom:11px;right:11px}
+
+@media(max-width:900px){
+  nav.primary{display:none}
+  .tri-menu{display:flex}
+}
+
+/* MOBILE DROPDOWN */
+.mobile-dropdown{
+  position:fixed;top:100px;left:50%;
+  transform:translateX(-50%) translateY(-10px);
+  width:88%;max-width:720px;
+  background:rgba(0,0,0,0.85);
+  backdrop-filter:blur(8px);
+  border-radius:16px;padding:14px 0;
+  border:1px solid rgba(255,255,255,0.1);
+  display:flex;flex-direction:column;
+  gap:12px;align-items:center;
+  opacity:0;pointer-events:none;
+  transition:.25s;
+}
+.mobile-dropdown.active{
+  opacity:1;pointer-events:auto;
+  transform:translateX(-50%) translateY(0);
+}
+
+/* -----------------------------------------------------------
+   CONNECT CONTAINER
+----------------------------------------------------------- */
+main{padding-top:120px;flex:1}
+
+.connect-container{
+  max-width:1150px;
+  margin:70px auto 40px;
+  padding:48px 38px;
+  background:rgba(0,0,0,0.68);
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(18px);
+  border-radius:26px;
+  box-shadow:0 22px 65px rgba(0,0,0,0.75);
+}
+
+.hero-grid{
+  display:grid;
+  grid-template-columns:1fr 380px;
+  gap:40px;
+}
+@media(max-width:900px){
+  .hero-grid{
+    grid-template-columns:1fr;
+    gap:26px;
+  }
+}
+
+/* LEFT TEXT */
+.kicker{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:6px 14px;
+  background:rgba(0,0,0,0.5);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:999px;
+  letter-spacing:0.15em;
+  font-size:0.75rem;
+  color:var(--soft-text);
+}
+.kicker-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--vs-gradient);
+}
+
+.title{
+  margin-top:20px;
+  font-family:'Space Grotesk';
+  font-weight:800;
+  font-size:clamp(2.2rem,4vw,3.1rem);
+  background:var(--vs-gradient);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+
+.lead{
+  margin-top:14px;
+  font-size:1.05rem;
+  line-height:1.65;
+  color:var(--soft-text);
+  max-width:620px;
+}
+
+.hero-buttons{
+  margin-top:26px;display:flex;gap:14px;flex-wrap:wrap;
+}
+
+/* BUTTONS */
+.btn{
+  padding:12px 26px;border-radius:999px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.12);
+  font-family:'Space Grotesk';
+  font-weight:800;font-size:0.9rem;
+  color:white;cursor:pointer;
+  position:relative;overflow:hidden;
+  transition:.25s;
+}
+.btn .fill{
+  position:absolute;inset:0;
+  background:var(--vs-gradient);
+  transform:scaleX(0);transform-origin:left;
+  transition:.35s;z-index:1;
+}
+.btn span{position:relative;z-index:2}
+.btn:hover .fill{transform:scaleX(1)}
+.btn:hover{transform:translateY(-3px)}
+
+/* RIGHT CONTACT CARD */
+.contact-card{
+  background:rgba(0,0,0,0.75);
+  border:1px solid rgba(255,255,255,0.12);
+  backdrop-filter:blur(18px);
+  border-radius:20px;
+  padding:26px;
+  display:flex;flex-direction:column;gap:22px;
+}
+
+.contact-row{display:flex;align-items:center;gap:14px}
+.icon-round{
+  width:54px;height:54px;border-radius:16px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.15);
+  display:grid;place-items:center;
+}
+.contact-title{
+  font-family:'Space Grotesk';font-size:1.05rem;
+  font-weight:800;
+}
+.contact-sub{color:var(--soft-text);margin-top:3px;font-size:0.92rem}
+
+/* -----------------------------------------------------------
+   POPUP FORM
+----------------------------------------------------------- */
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.65);
+  backdrop-filter:blur(6px);
+  display:none;justify-content:center;align-items:center;
+  z-index:999;
+}
+
+.form-popup{
+  width:95%;max-width:430px;
+  background:rgba(0,0,0,0.85);
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,0.12);
+  padding:28px;
+  position:relative;
+}
+
+.close-btn{
+  position:absolute;top:12px;right:16px;
+  font-size:1.6rem;cursor:pointer;
+  color:white;
+}
+
+.form-popup input,
+.form-popup textarea{
+  width:100%;padding:14px;
+  background:rgba(255,255,255,0.06);
+  border:none;border-radius:12px;
+  color:white;font-size:1rem;
+  margin-bottom:12px;
+}
+.form-popup textarea{min-height:120px}
+
+/* FOOTER */
+footer{
+  text-align:center;padding:24px;
+  color:rgba(226,232,240,0.7);
+}
+</style>
+</head>
+
+<body>
+
+<div class="connect-bg"></div>
+
+<!-- NAV -->
+<div class="nav-wrap">
+  <header class="nav">
+    <div class="brand-wrap">
+      <img src="vs.png" class="brand-logo">
+      <div class="brand">VisionaryStudio</div>
+    </div>
+
+    <nav class="primary">
+      <a href="index.html">HOME</a>
+      <a href="core.html">CORE</a>
+  
+    </nav>
+
+    <button class="tri-menu" id="triMenu">
+      <div class="tri-dot dot1"></div>
+      <div class="tri-dot dot2"></div>
+      <div class="tri-dot dot3"></div>
+    </button>
+  </header>
+</div>
+
+<!-- MOBILE DROPDOWN -->
+<div class="mobile-dropdown" id="mobileDropdown">
+  <a href="index.html">HOME</a>
+  <a href="core.html">CORE</a>
+ 
+</div>
+
+<main>
+
+<!-- MAIN CONNECT AREA -->
+<section class="connect-container">
+
+  <div class="hero-grid">
+
+    <!-- LEFT -->
+    <div>
+      <div class="kicker"><span class="kicker-dot"></span>CONNECT · ASK · COLLABORATE</div>
+
+      <h1 class="title">Let’s make that idea easier to act on.</h1>
+
+      <p class="lead">
+        Share your vision, send a note, or start a quick chat — we’ll reply with clarity and a recommended next step.
+      </p>
+
+      <div class="hero-buttons">
+        <button class="btn" id="whatsappBtn"><span class="fill"></span><span>Chat on WhatsApp</span></button>
+        <button class="btn" id="openFormBtn"><span class="fill"></span><span>Send a Vision</span></button>
+      </div>
+    </div>
+
+    <!-- RIGHT CARD -->
+    <aside class="contact-card">
+
+        <!-- EMAIL ROW -->
+        <div class="contact-row">
+          <div class="icon-round">
+            <svg width="22" height="22" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="2"/>
+              <path d="M3 7l9 6 9-6"/>
+            </svg>
+          </div>
+          <div>
+            <div class="contact-title">Email</div>
+            <div class="contact-sub">Visionary.service@gmail.com</div>
+          </div>
+        </div>
+      
+        <!-- PHONE / WHATSAPP ROW -->
+        <div class="contact-row">
+          <div class="icon-round">
+            <svg width="24" height="24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92V21a1 1 0 0 1-1.08 1A19 19 0 0 1 3 5.08 1 1 0 0 1 4 4h4.09a1 1 0 0 1 1 .75c.12.79.37 1.54.73 2.24a1 1 0 0 1-.24 1.11L8.8 10.8a15 15 0 0 0 6.4 6.4l1.7-1.78a1 1 0 0 1 1.11-.24c.7.36 1.45.61 2.24.73a1 1 0 0 1 .75 1z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="contact-title">Call / WhatsApp</div>
+            <div class="contact-sub">+91 00000 00000</div>
+          </div>
+        </div>
+      
+      </aside>
+      
+  </div>
+
+</section>
+
+</main>
+
+<footer>
+  © <span id="year"></span> VisionaryStudio — Built for creators, founders & brands.
+</footer>
+
+<!-- POPUP FORM -->
+<div class="overlay" id="formOverlay">
+  <div class="form-popup">
+    <div class="close-btn" id="closeForm">×</div>
+
+    <h2 style="text-align:center;font-family:'Space Grotesk';
+      background:var(--vs-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      margin-bottom:14px;">Send a Vision</h2>
+
+    <form id="contactForm">
+      <input id="name" placeholder="Your Name" required>
+      <input id="email" type="email" placeholder="Your Email" required>
+      <textarea id="message" placeholder="Describe your vision..." required></textarea>
+
+      <button class="btn" type="submit"><span class="fill"></span><span>Send</span></button>
+    </form>
+  </div>
+</div>
+
+<script>
+/* YEAR */
+document.getElementById("year").textContent = new Date().getFullYear();
+
+/* MOBILE MENU */
+const tri = document.getElementById("triMenu");
+const drop = document.getElementById("mobileDropdown");
+tri.onclick = ()=> drop.classList.toggle("active");
+
+/* POPUP FORM */
+const overlay = document.getElementById("formOverlay");
+document.getElementById("openFormBtn").onclick = ()=> overlay.style.display="flex";
+document.getElementById("closeForm").onclick = ()=> overlay.style.display="none";
+overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.style.display="none"});
+
+/* WHATSAPP */
+const waNumber = "910000000000";
+const waMsg = encodeURIComponent("Hi VisionaryStudio! I have a vision I'd like to share.");
+document.getElementById("whatsappBtn").onclick = ()=> {
+  window.open(`https://wa.me/${waNumber}?text=${waMsg}`,"_blank");
+};
+
+/* EMAILJS */
+emailjs.init("YOUR_PUBLIC_KEY");
+document.getElementById("contactForm").addEventListener("submit",function(e){
+  e.preventDefault();
+
+  const data = {
+    from_name: name.value,
+    from_email: email.value,
+    message: message.value
+  };
+
+  emailjs.send("YOUR_SERVICE_ID","YOUR_TEMPLATE_ID",data)
+    .then(()=>{
+      alert("Message sent!");
+      overlay.style.display="none";
+      this.reset();
+    })
+    .catch(()=> alert("Failed to send. Check EmailJS keys."));
+});
+</script>
+
+</body>
+</html>

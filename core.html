@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>VisionaryStudio — Core</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;800&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+:root{
+  --vs-gradient: linear-gradient(135deg,#6366F1,#8B5CF6,#EC4899);
+  --vs-bg: #020312;
+  --glass-bg: rgba(0,0,0,0.7);
+  --glass-border: rgba(255,255,255,0.45);
+  --soft-text: rgba(226,232,240,0.9);
+  --btn-inactive: rgba(0,0,0,0.7);
+  --icon-size: 26px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  font-family:Inter,sans-serif;
+  color:white;
+  overflow-x:hidden;
+  background:var(--vs-bg);
+  position:relative;
+}
+
+/* FIXED BACKGROUND (Safari-safe) */
+.vs-fixed-bg{
+  position:fixed;inset:0;z-index:-10;
+  background-image:url("https://images.unsplash.com/photo-1604879616509-d841eec0ca4e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0");
+  background-size:cover;background-position:center;background-repeat:no-repeat;pointer-events:none;
+}
+@media (max-width:900px){
+  .vs-fixed-bg{
+    background-image:url("https://images.unsplash.com/photo-1628498188873-579210ce622e?q=80&w=654&auto=format&fit=crop&ixlib=rb-4.1.0");
+    background-position:center top;
+  }
+}
+
+/* NAV */
+.nav-wrap{position:fixed;top:18px;left:0;right:0;display:flex;justify-content:center;z-index:220}
+.nav{width:98%;max-width:1350px;height:72px;border-radius:20px;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.65);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.7);box-shadow:0 0 18px rgba(255,255,255,0.25),0 18px 60px rgba(0,0,0,0.8)}
+.brand-wrap{display:flex;align-items:center;gap:12px}
+.brand-logo{width:44px;height:44px;border-radius:50%;object-fit:contain;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.6);box-shadow:0 0 18px rgba(129,140,248,0.9)}
+.brand{font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.35rem;background:var(--vs-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* DESKTOP NAV LINKS */
+nav.primary{display:flex;gap:34px;align-items:center}
+nav.primary a{color:white;text-decoration:none;font-family:'Space Grotesk';font-weight:800;font-size:0.9rem;padding:10px 4px;letter-spacing:0.16em;position:relative;transition:.25s}
+nav.primary a:hover{transform:translateY(-2px);opacity:0.9}
+nav.primary a::after{content:"";position:absolute;bottom:-6px;left:0;height:2px;width:0%;background:var(--vs-gradient);border-radius:4px;box-shadow:0 0 12px rgba(129,140,248,0.5);transition:width .3s}
+nav.primary a:hover::after{width:100%}
+
+/* TRI-DOT DICE MENU (mobile) */
+.tri-menu{display:none;position:relative;width:46px;height:46px;border-radius:14px;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.5);backdrop-filter:blur(12px);cursor:pointer;box-shadow:0 0 18px rgba(129,140,248,0.7);justify-content:center;align-items:center;transition:.3s}
+.tri-dot{position:absolute;width:8px;height:8px;background:white;border-radius:50%;box-shadow:0 0 8px rgba(255,255,255,0.9);transition:opacity .22s ease}
+.tri-dot.dot1{top:50%;left:50%;transform:translate(-50%,-50%)}
+.tri-dot.dot2{top:11px;left:11px}
+.tri-dot.dot3{bottom:11px;right:11px}
+.tri-menu.rolling{animation:diceRoll 0.45s ease-in-out}
+@keyframes diceRoll{0%{transform:translateY(0) rotate(0deg);}20%{transform:translateY(-2px) rotate(10deg);}40%{transform:translateY(2px) rotate(-10deg);}60%{transform:translateY(-1px) rotate(6deg);}80%{transform:translateY(1px) rotate(-4deg);}100%{transform:translateY(0) rotate(0deg);}}
+
+/* MOBILE DROPDOWN */
+.mobile-dropdown{position:fixed;top:100px;left:50%;transform:translateX(-50%) translateY(-10px);width:88%;max-width:720px;background:rgba(0,0,0,0.9);backdrop-filter:blur(10px);border-radius:16px;border:1px solid rgba(255,255,255,0.35);padding:12px 0;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;pointer-events:none;transition:opacity .22s ease, transform .22s ease;z-index:200}
+.mobile-dropdown.active{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+.mobile-dropdown a{font-family:'Space Grotesk';font-weight:800;font-size:0.85rem;letter-spacing:0.16em;text-decoration:none;color:white;padding:8px 4px}
+
+/* HERO */
+main{padding-top:120px}
+.hero,.section-wrap,.stack-section,footer{position:relative;z-index:5}
+.hero{min-height:52vh;display:flex;align-items:center;justify-content:center;padding:40px 20px 56px}
+.hero-inner{max-width:980px;text-align:center}
+.welcome{font-family:'Space Grotesk';font-weight:800;font-size:clamp(2.1rem,6vw,3.2rem);background:var(--vs-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.slogan{font-family:'Inter';font-weight:500;font-size:1.05rem;max-width:740px;margin:14px auto 26px;color:var(--soft-text)}
+
+/* SECTIONS / STACKED CAROUSELS */
+.section-wrap{max-width:1150px;margin:0 auto;padding:10px 20px 60px}
+.stack-section{max-width:1150px;margin:34px auto 70px auto;padding:0 20px;perspective:1400px}
+.stack-header{text-align:center;margin-bottom:24px}
+.stack-title{font-family:'Space Grotesk';font-size:1.7rem;font-weight:800;background:var(--vs-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stack-sub{font-size:0.95rem;color:var(--soft-text);max-width:520px;margin:10px auto 0}
+
+.stack-carousel-wrap{position:relative;z-index:20;height:460px;display:flex;align-items:center;justify-content:center;margin-top:18px;overflow:visible;transform-style:preserve-3d}
+.stack-card{position:absolute;width:260px;aspect-ratio:9/16;border-radius:26px;background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(18px);box-shadow:0 0 22px rgba(255,255,255,0.2),0 22px 60px rgba(0,0,0,0.95);padding:16px 14px 16px;display:flex;flex-direction:column;overflow:hidden;transition:transform .45s ease, opacity .45s ease, z-index .45s ease, box-shadow .3s ease, border-color .3s ease;opacity:0;transform-style:preserve-3d;backface-visibility:hidden}
+.stack-card-inner{border-radius:20px;overflow:hidden;height:48%;margin-bottom:12px}
+.stack-card-inner img{width:100%;height:100%;object-fit:cover;transform:scale(1.03)}
+.stack-card h3{font-family:'Space Grotesk';font-size:1rem;margin-bottom:6px;background:var(--vs-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stack-card p{font-size:0.86rem;color:var(--soft-text);line-height:1.5;text-align:center}
+.stack-card{text-align:center}
+
+/* 5 positions */
+.pos-center{transform:translateX(0) translateY(0) scale(1);opacity:1;z-index:5}
+.pos-right1{transform:translateX(220px) translateY(12px) scale(0.94) rotateY(-14deg);opacity:0.85;z-index:4}
+.pos-right2{transform:translateX(380px) translateY(26px) scale(0.82) rotateY(-20deg);opacity:0.55;z-index:3}
+.pos-left1{transform:translateX(-220px) translateY(12px) scale(0.94) rotateY(14deg);opacity:0.85;z-index:4}
+.pos-left2{transform:translateX(-380px) translateY(26px) scale(0.82) rotateY(20deg);opacity:0.55;z-index:3}
+.stack-card:hover{box-shadow:0 0 28px rgba(255,255,255,0.26),0 30px 80px rgba(0,0,0,1);border-color:rgba(255,255,255,0.7)}
+
+/* ARROWS */
+.stack-arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:999px;border:1px solid rgba(255,255,255,0.9);background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .25s, transform .2s, box-shadow .25s;z-index:5}
+.stack-arrow:hover{background:var(--vs-gradient);box-shadow:0 0 20px rgba(255,255,255,0.25),0 12px 30px rgba(0,0,0,0.9);transform:translateY(-50%) translateY(-2px)}
+.stack-arrow svg{width:18px;height:18px}
+.stack-arrow-left{left:4px}
+.stack-arrow-right{right:4px}
+
+/* FOOTER */
+footer{padding:22px 20px 26px;text-align:center;color:rgba(226,232,240,0.9);font-size:0.8rem;text-shadow:0 0 8px rgba(0,0,0,0.9)}
+
+/* RESPONSIVE */
+@media (max-width:900px){
+  nav.primary{display:none}
+  .tri-menu{display:flex}
+  .stack-arrow{display:none !important}
+}
+@media (max-width:600px){
+  .stack-carousel-wrap{height:430px}
+  .stack-card{width:220px}
+  .pos-right1{transform:translateX(180px) translateY(12px) scale(0.92) rotateY(-14deg)}
+  .pos-right2{transform:translateX(300px) translateY(24px) scale(0.8) rotateY(-20deg)}
+  .pos-left1{transform:translateX(-180px) translateY(12px) scale(0.92) rotateY(14deg)}
+  .pos-left2{transform:translateX(-300px) translateY(24px) scale(0.8) rotateY(20deg)}
+}
+</style>
+</head>
+
+<body>
+
+<div class="vs-fixed-bg"></div>
+
+<!-- NAV -->
+<div class="nav-wrap">
+  <header class="nav">
+    <div class="brand-wrap">
+      <img src="vs.png" alt="VisionaryStudio logo" class="brand-logo">
+      <div class="brand">VisionaryStudio</div>
+    </div>
+
+    <nav class="primary">
+      <a href="index.html">HOME</a>
+      <a href="connect.html">CONNECT</a>
+    </nav>
+
+    <!-- Dice-style tri-dot menu -->
+    <button class="tri-menu" id="triMenuButton" aria-label="Toggle menu">
+      <div class="tri-dot dot1"></div>
+      <div class="tri-dot dot2"></div>
+      <div class="tri-dot dot3"></div>
+    </button>
+  </header>
+</div>
+
+<!-- MOBILE DROPDOWN -->
+<div class="mobile-dropdown" id="mobileDropdown">
+  <a href="index.html">HOME</a>
+ 
+  <a href="connect.html">CONNECT</a>
+</div>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <h1 class="welcome">Inside the Core</h1>
+      <p class="slogan">Where clarity, intelligence, and design operate as one.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 5 — CORE STATEMENT (5 cards) -->
+  <section class="stack-section" id="core5">
+    <div class="stack-header">
+      <h2 class="stack-title">Core Statement</h2>
+      <p class="stack-sub">Where ideas turn into identity, and identity turns into impact.</p>
+    </div>
+
+    <div class="stack-carousel-wrap" data-section="5">
+      <button class="stack-arrow stack-arrow-left" aria-label="Previous">
+        <svg viewBox="0 0 24 24"><path d="M14.8 5L8 12l6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <!-- Card 5.1 - Identity Engine (image: clean logo/branding shot) -->
+      <article class="stack-card" data-index="0">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Identity engine">
+        </div>
+        <h3>Identity Engine</h3>
+        <p>VisionaryStudio turns raw ideas into defined identity systems that speak with clarity and confidence.</p>
+      </article>
+
+      <!-- Card 5.2 - Impact by Design (image: striking product display) -->
+      <article class="stack-card" data-index="1">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1505238680356-667803448bb6?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Impact by design">
+        </div>
+        <h3>Impact by Design</h3>
+        <p>Everything we create is engineered to leave a mark — emotionally, visually, and strategically.</p>
+      </article>
+
+      <!-- Card 5.3 - The Vision Shift (image: abstract perspective / horizon) -->
+      <article class="stack-card" data-index="2">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Vision shift">
+        </div>
+        <h3>The Vision Shift</h3>
+        <p>We don’t follow trends; we alter perspectives — where ideas evolve into meaningful realities.</p>
+      </article>
+
+      <!-- Card 5.4 - Structured Expression (image: geometric architecture) -->
+      <article class="stack-card" data-index="3">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1664854953181-b12e6dda8b7c?q=80&w=928&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Structured expression">
+        </div>
+        <h3>Structured Expression</h3>
+        <p>Raw concepts are shaped with intention to become expressive systems that scale and endure.</p>
+      </article>
+
+      <!-- Card 5.5 - The Operating System (image: abstract circuitry / grid) -->
+      <article class="stack-card" data-index="4">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Operating system">
+        </div>
+        <h3>The Operating System</h3>
+        <p>The Core is not a philosophy — it’s our operating system: deliberate, repeatable, and future-facing.</p>
+      </article>
+
+      <button class="stack-arrow stack-arrow-right" aria-label="Next">
+        <svg viewBox="0 0 24 24"><path d="M9.2 5L16 12l-6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- SECTION 1 — THE CORE PURPOSE (5 cards) -->
+  <section class="stack-section" id="core1">
+    <div class="stack-header">
+      <h2 class="stack-title">The Core Purpose</h2>
+      <p class="stack-sub">Transforming uncertainty into clarity — one system at a time.</p>
+    </div>
+
+    <div class="stack-carousel-wrap" data-section="1">
+      <button class="stack-arrow stack-arrow-left" aria-label="Previous">
+        <svg viewBox="0 0 24 24"><path d="M14.8 5L8 12l6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <!-- Card 1.1 - Decode the Vision (image: research/insight desk) -->
+      <article class="stack-card" data-index="0">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1527689368864-3a821dbccc34?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Decode the vision">
+        </div>
+        <h3>Decode the Vision</h3>
+        <p>Before we build, we seek the intention, emotion, and direction behind every idea.</p>
+      </article>
+
+      <!-- Card 1.2 - Establish the Foundation (image: blueprint/architectural plan) -->
+      <article class="stack-card" data-index="1">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1633598787001-e3389f6d1bd5?q=80&w=2064&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Establish the foundation">
+        </div>
+        <h3>Establish the Foundation</h3>
+        <p>Projects get a scalable structure that ensures consistency and long-term evolution.</p>
+      </article>
+
+      <!-- Card 1.3 - Build with Precision (image: close-up machinery / hands crafting) -->
+      <article class="stack-card" data-index="2">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Build with precision">
+        </div>
+        <h3>Build with Precision</h3>
+        <p>No randomness — every output is deliberate, purposeful, and aligned with your true potential.</p>
+      </article>
+
+      <!-- Card 1.4 - Elevate the Outcome (image: spotlight / launch visual) -->
+      <article class="stack-card" data-index="3">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Elevate the outcome">
+        </div>
+        <h3>Elevate the Outcome</h3>
+        <p>The Core ensures the final work is transformed into something iconic, not just delivered.</p>
+      </article>
+
+      <!-- Card 1.5 - Scalable Blueprints (image: abstract modular architecture) -->
+      <article class="stack-card" data-index="4">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Scalable blueprints">
+        </div>
+        <h3>Scalable Blueprints</h3>
+        <p>We create the blueprints that let your brand grow without losing its core identity.</p>
+      </article>
+
+      <button class="stack-arrow stack-arrow-right" aria-label="Next">
+        <svg viewBox="0 0 24 24"><path d="M9.2 5L16 12l-6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- SECTION 2 — CORE PRINCIPLES (5 cards) -->
+  <section class="stack-section" id="core2">
+    <div class="stack-header">
+      <h2 class="stack-title">Core Principles</h2>
+      <p class="stack-sub">Guiding rules that shape every decision and pixel.</p>
+    </div>
+
+    <div class="stack-carousel-wrap" data-section="2">
+      <button class="stack-arrow stack-arrow-left" aria-label="Previous">
+        <svg viewBox="0 0 24 24"><path d="M14.8 5L8 12l6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <!-- Card 2.1 - Clarity First (image: crystal / glass light) -->
+      <article class="stack-card" data-index="0">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Clarity first">
+        </div>
+        <h3>Clarity First</h3>
+        <p>Remove noise. Highlight intent. Clarity is the foundation of great design.</p>
+      </article>
+
+      <!-- Card 2.2 - Function × Emotion (image: candid human interaction / product in use) -->
+      <article class="stack-card" data-index="1">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Function x emotion">
+        </div>
+        <h3>Function × Emotion</h3>
+        <p>Design must perform with logic and connect with feeling — both matter equally.</p>
+      </article>
+
+      <!-- Card 2.3 - Systematic Creativity (image: colorful motion / generative art) -->
+      <article class="stack-card" data-index="2">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Systematic creativity">
+        </div>
+        <h3>Systematic Creativity</h3>
+        <p>Creativity becomes powerful when guided by processes, patterns, and disciplined thinking.</p>
+      </article>
+
+      <!-- Card 2.4 - Integrated Intelligence (image: data visualization / network) -->
+      <article class="stack-card" data-index="3">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Integrated intelligence">
+        </div>
+        <h3>Integrated Intelligence</h3>
+        <p>AI, strategy, and human insight combine to create smarter creative outcomes.</p>
+      </article>
+
+      <!-- Card 2.5 - Intent Over Aesthetics (image: focused detail / lens) -->
+      <article class="stack-card" data-index="4">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&q=80&w=1200&auto=format&fit=crop" alt="Intent over aesthetics">
+        </div>
+        <h3>Intent Over Aesthetics</h3>
+        <p>Beautiful design is good. Purposeful design is unforgettable.</p>
+      </article>
+
+      <button class="stack-arrow stack-arrow-right" aria-label="Next">
+        <svg viewBox="0 0 24 24"><path d="M9.2 5L16 12l-6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- SECTION 3 — CORE OUTPUT (5 cards) -->
+  <section class="stack-section" id="core3">
+    <div class="stack-header">
+      <h2 class="stack-title">Core Output</h2>
+      <p class="stack-sub">The tangible systems, visuals, and frameworks we deliver.</p>
+    </div>
+
+    <div class="stack-carousel-wrap" data-section="3">
+      <button class="stack-arrow stack-arrow-left" aria-label="Previous">
+        <svg viewBox="0 0 24 24"><path d="M14.8 5L8 12l6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <!-- Card 3.1 - Identity Systems (image: brand kit / stationery) -->
+      <article class="stack-card" data-index="0">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1522199755839-a2bacb67c546?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Identity systems">
+        </div>
+        <h3>Identity Systems</h3>
+        <p>Logos, colors, typography, and voice — designed to be future-proof and unmistakable.</p>
+      </article>
+
+      <!-- Card 3.2 - Experience Frameworks (image: UX flow / whiteboard) -->
+      <article class="stack-card" data-index="1">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Experience frameworks">
+        </div>
+        <h3>Experience Frameworks</h3>
+        <p>User flows and interactions crafted to feel intuitive, fluid, and emotionally aligned.</p>
+      </article>
+
+      <!-- Card 3.3 - Visual Worlds (image: immersive color / set design) -->
+      <article class="stack-card" data-index="2">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1535223289827-42f1e9919769?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Visual worlds">
+        </div>
+        <h3>Visual Worlds</h3>
+        <p>A complete aesthetic universe that gives the brand its own character and atmosphere.</p>
+      </article>
+
+      <!-- Card 3.4 - Creative Architecture (image: modular design / layers) -->
+      <article class="stack-card" data-index="3">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Creative architecture">
+        </div>
+        <h3>Creative Architecture</h3>
+        <p>Blueprints that make scaling easy — maintaining quality, purpose, and coherence.</p>
+      </article>
+
+      <!-- Card 3.5 - Tangible Systems (image: product ecosystem) -->
+      <article class="stack-card" data-index="4">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Tangible systems">
+        </div>
+        <h3>Tangible Systems</h3>
+        <p>Deliverables designed as living systems — ready to evolve with your brand.</p>
+      </article>
+
+      <button class="stack-arrow stack-arrow-right" aria-label="Next">
+        <svg viewBox="0 0 24 24"><path d="M9.2 5L16 12l-6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- SECTION 4 — WHY THE CORE MATTERS (5 cards) -->
+  <section class="stack-section" id="core4">
+    <div class="stack-header">
+      <h2 class="stack-title">Why the Core Matters</h2>
+      <p class="stack-sub">A strong core separates good design from transformative design.</p>
+    </div>
+
+    <div class="stack-carousel-wrap" data-section="4">
+      <button class="stack-arrow stack-arrow-left" aria-label="Previous">
+        <svg viewBox="0 0 24 24"><path d="M14.8 5L8 12l6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <!-- Card 4.1 - Consistency = Power (image: repeating pattern / branded set) -->
+      <article class="stack-card" data-index="0">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1503602642458-232111445657?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Consistency">
+        </div>
+        <h3>Consistency = Power</h3>
+        <p>A strong core ensures every piece of content feels unified and instantly recognizable.</p>
+      </article>
+
+      <!-- Card 4.2 - Future-Ready Design (image: forward-looking city / tech skyline) -->
+      <article class="stack-card" data-index="1">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1467269204594-9661b134dd2b?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Future-ready">
+        </div>
+        <h3>Future-Ready Design</h3>
+        <p>Brands built with a Core adapt effortlessly — across new platforms, markets, and technologies.</p>
+      </article>
+
+      <!-- Card 4.3 - Emotional Resonance (image: human connection / light) -->
+      <article class="stack-card" data-index="2">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Emotional resonance">
+        </div>
+        <h3>Emotional Resonance</h3>
+        <p>A meaningful brand connects, stays, and influences — that’s the power of a Core.</p>
+      </article>
+
+      <!-- Card 4.4 - The Competitive Edge (image: podium / sharp shadow) -->
+      <article class="stack-card" data-index="3">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Edge">
+        </div>
+        <h3>The Competitive Edge</h3>
+        <p>The Core gives VisionaryStudio the edge — and it’s the same edge we give to our partners.</p>
+      </article>
+
+      <!-- Card 4.5 - Lasting Impact (image: long-exposure light trails / memory) -->
+      <article class="stack-card" data-index="4">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1503264116251-35a269479413?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3" alt="Lasting impact">
+        </div>
+        <h3>Lasting Impact</h3>
+        <p>Transforming brands into experiences — and experiences into lasting impact.</p>
+      </article>
+
+      <button class="stack-arrow stack-arrow-right" aria-label="Next">
+        <svg viewBox="0 0 24 24"><path d="M9.2 5L16 12l-6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </section>
+
+</main>
+
+<footer id="footer">
+  © <span id="year"></span> VisionaryStudio — Built for creators, founders & brands.
+</footer>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+/* AUTO YEAR */
+const yearEl = document.getElementById("year");
+if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+/* DICE TRI-DOT MENU */
+const triMenu = document.getElementById("triMenuButton");
+const mobileDropdown = document.getElementById("mobileDropdown");
+const dots = triMenu ? triMenu.querySelectorAll(".tri-dot") : [];
+let diceState = 1;
+
+function renderDiceFace(num){
+  if (!dots.length) return;
+  dots.forEach(dot => { dot.style.opacity = 0; });
+  if (num === 1){
+    dots.forEach(dot => { if (dot.classList.contains("dot1")) dot.style.opacity = 1; });
+  } else if (num === 2){
+    dots.forEach(dot => { if (dot.classList.contains("dot2") || dot.classList.contains("dot3")) dot.style.opacity = 1; });
+  } else {
+    dots.forEach(dot => { dot.style.opacity = 1; });
+  }
+}
+renderDiceFace(diceState);
+
+if (triMenu && mobileDropdown){
+  triMenu.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!triMenu.classList.contains("rolling")){
+      triMenu.classList.add("rolling");
+      dots.forEach(dot => { dot.style.transition = "opacity 0.18s ease, filter 0.18s ease"; dot.style.filter = "blur(2px)"; });
+      setTimeout(() => {
+        diceState = diceState === 3 ? 1 : diceState + 1;
+        renderDiceFace(diceState);
+        dots.forEach(dot => { dot.style.filter = "blur(0)"; });
+      }, 180);
+      setTimeout(() => { triMenu.classList.remove("rolling"); }, 450);
+    }
+    triMenu.classList.toggle("open");
+    mobileDropdown.classList.toggle("active");
+  });
+
+  mobileDropdown.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", () => {
+      triMenu.classList.remove("open");
+      mobileDropdown.classList.remove("active");
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!triMenu.contains(e.target) && !mobileDropdown.contains(e.target)){
+      triMenu.classList.remove("open");
+      mobileDropdown.classList.remove("active");
+    }
+  });
+}
+
+/* STACK SECTION SCROLL REVEAL */
+gsap.utils.toArray(".stack-section").forEach((section) => {
+  gsap.from(section, {
+    opacity: 0,
+    y: 80,
+    duration: 0.7,
+    ease: "power3.out",
+    scrollTrigger: { trigger: section, start: "top 85%" }
+  });
+});
+
+/* MULTI 5-CARD 3D CAROUSEL INITIALIZATION */
+(function initStacks(){
+  let focusedCarousel = null;
+  const carouselWraps = Array.from(document.querySelectorAll('.stack-carousel-wrap'));
+
+  carouselWraps.forEach((wrap) => {
+    const cards = Array.from(wrap.querySelectorAll('.stack-card'));
+    let activeIndex = 0;
+
+    function updatePositions() {
+      const total = cards.length;
+      cards.forEach((card, idx) => {
+        card.classList.remove("pos-center","pos-left1","pos-left2","pos-right1","pos-right2");
+        let offset = (idx - activeIndex + total) % total;
+        if (offset === 0) { card.classList.add("pos-center"); card.style.opacity = 1; }
+        else if (offset === 1) { card.classList.add("pos-right1"); card.style.opacity = 0.85; }
+        else if (offset === 2) { card.classList.add("pos-right2"); card.style.opacity = 0.55; }
+        else if (offset === 3) { card.classList.add("pos-left2"); card.style.opacity = 0.55; }
+        else if (offset === 4) { card.classList.add("pos-left1"); card.style.opacity = 0.85; }
+      });
+    }
+    updatePositions();
+
+    const prevBtn = wrap.parentElement.querySelector('.stack-arrow.stack-arrow-left');
+    const nextBtn = wrap.parentElement.querySelector('.stack-arrow.stack-arrow-right');
+
+    function goNext() { activeIndex = (activeIndex + 1) % cards.length; updatePositions(); }
+    function goPrev() { activeIndex = (activeIndex - 1 + cards.length) % cards.length; updatePositions(); }
+
+    if (nextBtn) nextBtn.addEventListener('click', goNext);
+    if (prevBtn) prevBtn.addEventListener('click', goPrev);
+
+    // touch
+    let touchStartX = null; let touchStartY = null; let touchActive = false;
+    wrap.addEventListener("touchstart", (e) => {
+      const t = e.touches[0]; touchStartX = t.clientX; touchStartY = t.clientY; touchActive = true;
+    }, {passive:true});
+    wrap.addEventListener("touchend", (e) => {
+      if (!touchActive) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchStartX; const dy = t.clientY - touchStartY;
+      const absDx = Math.abs(dx), absDy = Math.abs(dy); const threshold = 40;
+      if (absDx > absDy && absDx > threshold) { if (dx < 0) goNext(); else goPrev(); }
+      touchStartX = null; touchStartY = null; touchActive = false;
+    }, {passive:true});
+
+    wrap.addEventListener('mouseenter', () => { focusedCarousel = wrap; });
+    wrap.addEventListener('mouseleave', () => { if (focusedCarousel === wrap) focusedCarousel = null; });
+
+    window.addEventListener('resize', updatePositions);
+  });
+
+  // keyboard navigation for focused carousel
+  window.addEventListener('keydown', (e) => {
+    if (!document.querySelectorAll) return;
+    const focused = document.querySelectorAll(':hover');
+    // quick check: if any carousel wrap is hovered, use arrow keys on that one
+    const hoveredWrap = Array.from(document.querySelectorAll('.stack-carousel-wrap')).find(w => w.matches(':hover'));
+    if (!hoveredWrap) return;
+    if (e.key === 'ArrowRight') hoveredWrap.parentElement.querySelector('.stack-arrow.stack-arrow-right')?.click();
+    if (e.key === 'ArrowLeft') hoveredWrap.parentElement.querySelector('.stack-arrow.stack-arrow-left')?.click();
+  });
+})();
+
+</script>
+
+</body>
+</html>

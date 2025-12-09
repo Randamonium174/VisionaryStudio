@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>VisionaryStudio — Home</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;800&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+:root{
+  --vs-gradient: linear-gradient(135deg,#6366F1,#8B5CF6,#EC4899);
+  --vs-bg: #020312;
+  --glass-bg: rgba(0,0,0,0.7);
+  --glass-border: rgba(255,255,255,0.45);
+  --soft-text: rgba(226,232,240,0.9);
+  --btn-inactive: rgba(0,0,0,0.7);
+  --icon-size: 26px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  min-height:100%;
+}
+body{
+  font-family:Inter,sans-serif;
+  color:white;
+  overflow-x:hidden;
+  background:var(--vs-bg);
+  position:relative;
+}
+
+/* FIXED BACKGROUND (Safari-safe) */
+.vs-fixed-bg{
+  position:fixed;
+  inset:0;
+  z-index:-10;
+  background-image:url("https://images.unsplash.com/photo-1604879616509-d841eec0ca4e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  pointer-events:none;
+}
+@media (max-width:900px){
+  .vs-fixed-bg{
+    background-image:url("https://images.unsplash.com/photo-1628498188873-579210ce622e?q=80&w=654&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+    background-position:center top;
+  }
+}
+
+/* NAV */
+.nav-wrap{
+  position:fixed;
+  top:18px;
+  left:0;
+  right:0;
+  display:flex;
+  justify-content:center;
+  z-index:220;
+}
+.nav{
+  width:98%;
+  max-width:1350px;
+  height:72px;
+  border-radius:20px;
+  padding:10px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:rgba(0,0,0,0.65);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.7);
+  box-shadow:
+    0 0 18px rgba(255,255,255,0.25),
+    0 18px 60px rgba(0,0,0,0.8);
+}
+.brand-wrap{display:flex;align-items:center;gap:12px}
+.brand-logo{
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  object-fit:contain;
+  background:rgba(0,0,0,0.6);
+  border:1px solid rgba(255,255,255,0.6);
+  box-shadow:0 0 18px rgba(129,140,248,0.9);
+}
+.brand{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:800;
+  font-size:1.35rem;
+  background:var(--vs-gradient);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* DESKTOP NAV LINKS */
+nav.primary{
+  display:flex;
+  gap:34px;
+  align-items:center;
+}
+nav.primary a{
+  color:white;
+  text-decoration:none;
+  font-family:'Space Grotesk';
+  font-weight:800;
+  font-size:0.9rem;
+  padding:10px 4px;
+  letter-spacing:0.16em;
+  position:relative;
+  transition:.25s;
+}
+nav.primary a:hover{transform:translateY(-2px);opacity:0.9}
+nav.primary a::after{
+  content:"";
+  position:absolute;
+  bottom:-6px;
+  left:0;
+  height:2px;
+  width:0%;
+  background:var(--vs-gradient);
+  border-radius:4px;
+  box-shadow:0 0 12px rgba(129,140,248,0.5);
+  transition:width .3s;
+}
+nav.primary a:hover::after{width:100%}
+
+/* TRI-DOT DICE MENU (mobile) */
+.tri-menu{
+  display:none;
+  position:relative;
+  width:46px;
+  height:46px;
+  border-radius:14px;
+  background:rgba(0,0,0,0.55);
+  border:1px solid rgba(255,255,255,0.5);
+  backdrop-filter:blur(12px);
+  cursor:pointer;
+  box-shadow:0 0 18px rgba(129,140,248,0.7);
+  justify-content:center;
+  align-items:center;
+  transition:.3s;
+}
+.tri-dot{
+  position:absolute;
+  width:8px;
+  height:8px;
+  background:white;
+  border-radius:50%;
+  box-shadow:0 0 8px rgba(255,255,255,0.9);
+  transition:opacity .22s ease;
+}
+
+/* base triangle positions (used as face positions) */
+.tri-dot.dot1{
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+}
+.tri-dot.dot2{
+  top:11px;
+  left:11px;
+}
+.tri-dot.dot3{
+  bottom:11px;
+  right:11px;
+}
+
+/* dice rolling animation */
+.tri-menu.rolling{
+  animation:diceRoll 0.45s ease-in-out;
+}
+
+@keyframes diceRoll{
+  0%{transform:translateY(0) rotate(0deg);}
+  20%{transform:translateY(-2px) rotate(10deg);}
+  40%{transform:translateY(2px) rotate(-10deg);}
+  60%{transform:translateY(-1px) rotate(6deg);}
+  80%{transform:translateY(1px) rotate(-4deg);}
+  100%{transform:translateY(0) rotate(0deg);}
+}
+
+/* MOBILE DROPDOWN */
+.mobile-dropdown{
+  position:fixed;
+  top:100px;
+  left:50%;
+  transform:translateX(-50%) translateY(-10px);
+  width:88%;
+  max-width:720px;
+  background:rgba(0,0,0,0.9);
+  backdrop-filter:blur(10px);
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,0.35);
+  padding:12px 0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .22s ease, transform .22s ease;
+  z-index:200;
+}
+.mobile-dropdown.active{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateX(-50%) translateY(0);
+}
+.mobile-dropdown a{
+  font-family:'Space Grotesk';
+  font-weight:800;
+  font-size:0.85rem;
+  letter-spacing:0.16em;
+  text-decoration:none;
+  color:white;
+  padding:8px 4px;
+}
+
+/* HERO */
+main{padding-top:120px}
+.hero,
+.section-wrap,
+.stack-section,
+.support,
+footer{
+  position:relative;
+  z-index:5;
+}
+.hero{
+  min-height:80vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:40px 20px 56px;
+}
+.hero-inner{
+  max-width:900px;
+  text-align:center;
+}
+.hero-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:5px 14px;
+  border-radius:999px;
+  background:rgba(0,0,0,0.7);
+  border:1px solid rgba(255,255,255,0.45);
+  font-size:0.75rem;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:#E5E7EB;
+  margin-bottom:14px;
+}
+.hero-dot{
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  background:var(--vs-gradient);
+}
+.welcome{
+  font-family:'Space Grotesk';
+  font-weight:800;
+  font-size:clamp(2.8rem,6vw,4.2rem);
+  background:var(--vs-gradient);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.slogan{
+  font-family:'Inter';
+  font-weight:500;
+  font-size:1.05rem;
+  max-width:600px;
+  margin:14px auto 26px;
+  color:var(--soft-text);
+}
+.hero-actions{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+/* BUTTONS */
+.btn{
+  display:inline-block;
+  padding:13px 30px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.7);
+  background:var(--btn-inactive);
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+  overflow:hidden;
+  transition:.25s;
+  font-size:0.9rem;
+  position:relative;
+  z-index:2;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+}
+.btn span{position:relative;z-index:5}
+.btn .fill{
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:var(--vs-gradient);
+  opacity:0;
+  transform:scaleX(0);
+  transform-origin:left;
+  transition:.3s;
+  z-index:1;
+}
+.btn:hover{transform:translateY(-3px) scale(1.02)}
+.btn:hover .fill{opacity:1;transform:scaleX(1)}
+
+/* SECTIONS / FEATURE CARDS */
+.section-wrap{
+  max-width:1150px;
+  margin:0 auto;
+  padding:10px 20px 60px;
+}
+.section-header{
+  text-align:center;
+  margin-bottom:26px;
+}
+.section-kicker{
+  font-size:0.8rem;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:#CBD5F5;
+}
+.section-title{
+  font-family:'Space Grotesk';
+  font-weight:800;
+  font-size:1.6rem;
+  margin-top:8px;
+  background:var(--vs-gradient);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.feature-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:18px;
+  max-width:900px;
+  margin:0 auto;
+}
+.feature-card{
+  background:var(--glass-bg);
+  border-radius:22px;
+  padding:18px 18px 22px;
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(18px);
+  box-shadow:
+    0 0 18px rgba(255,255,255,0.18),
+    0 18px 42px rgba(0,0,0,0.9);
+  transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  opacity:0;
+  transform:translateY(60px);
+  text-align:left;
+  min-height:260px;
+  display:flex;
+  flex-direction:column;
+}
+.feature-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(255,255,255,0.7);
+  box-shadow:
+    0 0 24px rgba(255,255,255,0.25),
+    0 24px 60px rgba(0,0,0,0.95);
+}
+.feature-img{
+  width:100%;
+  border-radius:16px;
+  overflow:hidden;
+  margin-bottom:12px;
+  height:120px;
+}
+.feature-img img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.feature-label{
+  font-size:0.7rem;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:#A5B4FC;
+  margin-bottom:6px;
+}
+.feature-title{
+  font-family:'Space Grotesk';
+  font-size:1.05rem;
+  margin-bottom:8px;
+  background:var(--vs-gradient);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.feature-text{
+  font-size:0.9rem;
+  color:var(--soft-text);
+  line-height:1.6;
+}
+
+/* CENTER TEXT IN CARDS */
+.feature-card,
+.stack-card{
+  text-align:center;
+}
+.feature-label,
+.feature-title,
+.feature-text,
+.stack-card h3,
+.stack-card p{
+  text-align:center;
+}
+
+/* STACKED 3D CAROUSEL (5-card wheel) */
+.stack-section{
+  max-width:1150px;
+  margin:0 auto 70px auto;
+  padding:0 20px;
+  perspective:1400px;
+}
+.stack-header{
+  text-align:center;
+  margin-bottom:24px;
+}
+.stack-title{
+  font-family:'Space Grotesk';
+  font-size:1.7rem;
+  font-weight:800;
+  background:var(--vs-gradient);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.stack-sub{
+  font-size:0.95rem;
+  color:var(--soft-text);
+  max-width:520px;
+  margin:10px auto 0;
+}
+
+.stack-carousel-wrap{
+  position:relative;
+  z-index:20;
+  height:500px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:18px;
+  overflow:visible;
+  transform-style:preserve-3d;
+}
+.stack-card{
+  position:absolute;
+  width:260px;
+  aspect-ratio:9/16;
+  border-radius:26px;
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(18px);
+  box-shadow:
+    0 0 22px rgba(255,255,255,0.2),
+    0 22px 60px rgba(0,0,0,0.95);
+  padding:16px 14px 16px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  transition:transform .45s ease, opacity .45s ease, z-index .45s ease, box-shadow .3s ease, border-color .3s ease;
+  opacity:0;
+  transform-style:preserve-3d;
+  backface-visibility:hidden;
+}
+.stack-card-inner{
+  border-radius:20px;
+  overflow:hidden;
+  height:50%;
+  margin-bottom:12px;
+}
+.stack-card-inner img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transform:scale(1.03);
+}
+.stack-card h3{
+  font-family:'Space Grotesk';
+  font-size:1rem;
+  margin-bottom:6px;
+  background:var(--vs-gradient);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.stack-card p{
+  font-size:0.86rem;
+  color:var(--soft-text);
+  line-height:1.5;
+}
+
+/* 5 positions */
+.pos-center{
+  transform:translateX(0) translateY(0) scale(1);
+  opacity:1;
+  z-index:5;
+}
+.pos-right1{
+  transform:translateX(220px) translateY(12px) scale(0.94) rotateY(-14deg);
+  opacity:0.85;
+  z-index:4;
+}
+.pos-right2{
+  transform:translateX(380px) translateY(26px) scale(0.82) rotateY(-20deg);
+  opacity:0.55;
+  z-index:3;
+}
+.pos-left1{
+  transform:translateX(-220px) translateY(12px) scale(0.94) rotateY(14deg);
+  opacity:0.85;
+  z-index:4;
+}
+.pos-left2{
+  transform:translateX(-380px) translateY(26px) scale(0.82) rotateY(20deg);
+  opacity:0.55;
+  z-index:3;
+}
+.stack-card:hover{
+  box-shadow:
+    0 0 28px rgba(255,255,255,0.26),
+    0 30px 80px rgba(0,0,0,1);
+  border-color:rgba(255,255,255,0.7);
+}
+
+/* ARROWS (desktop only) */
+.stack-arrow{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:40px;
+  height:40px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.9);
+  background:rgba(0,0,0,0.8);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:background .25s, transform .2s, box-shadow .25s;
+  z-index:5;
+}
+.stack-arrow:hover{
+  background:var(--vs-gradient);
+  box-shadow:
+    0 0 20px rgba(255,255,255,0.25),
+    0 12px 30px rgba(0,0,0,0.9);
+  transform:translateY(-50%) translateY(-2px);
+}
+.stack-arrow svg{
+  width:18px;
+  height:18px;
+}
+.stack-arrow-left{left:4px}
+.stack-arrow-right{right:4px}
+
+/* SOCIALS */
+.support{
+  text-align:center;
+  padding:50px 20px 40px;
+}
+.support h3{
+  font-family:'Space Grotesk';
+  font-weight:800;
+  font-size:1.8rem;
+  background:var(--vs-gradient);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.support p{
+  margin-top:10px;
+  font-size:0.92rem;
+  color:var(--soft-text);
+}
+.socials{
+  display:flex;
+  gap:18px;
+  justify-content:center;
+  margin-top:30px;
+  flex-wrap:wrap;
+}
+.socials a{
+  width:64px;
+  height:64px;
+  border-radius:18px;
+  display:grid;
+  place-items:center;
+  background:var(--glass-bg);
+  border:1px solid rgba(255,255,255,0.55);
+  box-shadow:
+    0 0 18px rgba(255,255,255,0.25),
+    0 12px 30px rgba(0,0,0,0.8);
+  transition:transform .28s.ease,box-shadow .28s ease,border-color .28s ease,background .28s ease;
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+}
+.socials a::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:var(--vs-gradient);
+  opacity:0;
+  transition:opacity .25s,transform .25s;
+  transform:scale(0.96);
+  z-index:1;
+}
+.socials a svg{
+  width:var(--icon-size);
+  height:var(--icon-size);
+  fill:none;
+  stroke:white;
+  stroke-width:1.4;
+  position:relative;
+  z-index:2;
+  transition:transform .25s;
+}
+.socials a:hover::before{opacity:1;transform:scale(1)}
+.socials a:hover{
+  transform:translateY(-6px);
+  box-shadow:
+    0 0 22px rgba(255,255,255,0.3),
+    0 18px 45px rgba(0,0,0,1);
+  border-color:rgba(255,255,255,0.9);
+}
+.socials a:hover svg{transform:translateY(-1px)}
+
+/* FOOTER */
+footer{
+  padding:22px 20px 26px;
+  text-align:center;
+  color:rgba(226,232,240,0.9);
+  font-size:0.8rem;
+  text-shadow:0 0 8px rgba(0,0,0,0.9);
+}
+
+/* RESPONSIVE */
+@media (max-width:900px){
+  nav.primary{display:none}
+  .tri-menu{display:flex}
+  .section-wrap{padding-bottom:50px}
+  .stack-arrow{display:none !important;} /* swipe-only on phones */
+}
+@media (max-width:900px){
+  .feature-grid{grid-template-columns:1fr;}
+}
+@media (max-width:600px){
+  .hero{padding-top:40px}
+  .welcome{font-size:clamp(2.3rem,9vw,3.1rem)}
+  .slogan{font-size:0.98rem}
+  .socials a{width:58px;height:58px}
+  .stack-carousel-wrap{height:430px;}
+  .stack-card{width:220px;}
+  .pos-right1{
+    transform:translateX(180px) translateY(12px) scale(0.92) rotateY(-14deg);
+  }
+  .pos-right2{
+    transform:translateX(300px) translateY(24px) scale(0.8) rotateY(-20deg);
+  }
+  .pos-left1{
+    transform:translateX(-180px) translateY(12px) scale(0.92) rotateY(14deg);
+  }
+  .pos-left2{
+    transform:translateX(-300px) translateY(24px) scale(0.8) rotateY(20deg);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="vs-fixed-bg"></div>
+
+<!-- NAV -->
+<div class="nav-wrap">
+  <header class="nav">
+    <div class="brand-wrap">
+      <img src="vs.png" alt="VisionaryStudio logo" class="brand-logo">
+      <div class="brand">VisionaryStudio</div>
+    </div>
+
+    <nav class="primary">
+     
+      <a href="core.html">CORE</a>
+      <a href="connect.html">CONNECT</a>
+    </nav>
+
+    <!-- Dice-style tri-dot menu -->
+    <button class="tri-menu" id="triMenuButton" aria-label="Toggle menu">
+      <div class="tri-dot dot1"></div>
+      <div class="tri-dot dot2"></div>
+      <div class="tri-dot dot3"></div>
+    </button>
+  </header>
+</div>
+
+<!-- MOBILE DROPDOWN -->
+<div class="mobile-dropdown" id="mobileDropdown">
+  
+  <a href="core.html">CORE</a>
+  <a href="connect.html">CONNECT</a>
+</div>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-kicker">
+        <span class="hero-dot"></span>
+        AI STRATEGY · BRAND · VALIDATION
+      </div>
+      <h1 class="welcome"> VisionaryStudio </h1>
+      <p class="slogan">AI-driven clarity for ideas, products, and businesses.</p>
+
+      <div class="hero-actions">
+        <button class="btn"
+                onclick="location.href='ai.html'">
+          <span class="fill"></span>
+          <span>Start a vision session</span>
+        </button>
+      
+        <button class="btn"
+                style="border-color:rgba(148,163,255,0.95);background:rgba(0,0,0,0.85);"
+                onclick="location.href='see.html'">
+          <span class="fill"></span>
+          <span>See what it can do</span>
+        </button>
+      </div>
+      
+    </div>
+  </section>
+
+ 
+
+  <!-- STACKED 5-CARD 3D CAROUSEL -->
+  <section class="stack-section" id="stack">
+    <div class="stack-header">
+      <h2 class="stack-title">Slide through your possible futures</h2>
+      <p class="stack-sub">
+        Scroll into this section and move between cards — each one is a different way VisionaryStudio
+        thinks about your idea, product, or market.
+      </p>
+    </div>
+
+    <div class="stack-carousel-wrap" id="stackWrap">
+      <button class="stack-arrow stack-arrow-left" id="stackPrev" aria-label="Previous">
+        <svg viewBox="0 0 24 24">
+          <path d="M14.8 5L8 12l6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <article class="stack-card" data-index="0">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1522199755839-a2bacb67c546?q=80&w=1200&auto=format&fit=crop" alt="">
+        </div>
+        <h3>From raw idea to visual brand</h3>
+        <p>
+          VisionaryStudio turns loose notes into a structured brand concept — narrative, visuals, and
+          ways to introduce it to the world.
+        </p>
+      </article>
+
+      <article class="stack-card" data-index="1">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?q=80&w=1200&auto=format&fit=crop" alt="">
+        </div>
+        <h3>Refine what already exists</h3>
+        <p>
+          Drop in your current website, social presence, or brand assets. The system reads it all and
+          proposes clearer positioning and sharper communication.
+        </p>
+      </article>
+
+      <article class="stack-card" data-index="2">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop" alt="">
+        </div>
+        <h3>Scenario checks and viability hints</h3>
+        <p>
+          Explore “what if” paths for pricing, markets, and audiences. VisionaryStudio outlines which
+          directions look promising — and which to avoid.
+        </p>
+      </article>
+
+      <article class="stack-card" data-index="3">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1200&auto=format&fit=crop" alt="">
+        </div>
+        <h3>Opportunity mapping</h3>
+        <p>
+          Surface hidden gaps in your space and see where your concept can stand out with the least resistance.
+        </p>
+      </article>
+
+      <article class="stack-card" data-index="4">
+        <div class="stack-card-inner">
+          <img src="https://images.unsplash.com/photo-1535223289827-42f1e9919769?q=80&w=1200&auto=format&fit=crop" alt="">
+        </div>
+        <h3>Signals & future trends</h3>
+        <p>
+          VisionaryStudio reads early signals and patterns to show how your idea could evolve over time.
+        </p>
+      </article>
+
+      <button class="stack-arrow stack-arrow-right" id="stackNext" aria-label="Next">
+        <svg viewBox="0 0 24 24">
+          <path d="M9.2 5L16 12l-6.8 7" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- SUPPORT / SOCIALS -->
+  <section class="support" id="socials">
+    <h3>Connect with VisionaryStudio</h3>
+    <p>Follow along, reach out, or keep this close for when your next idea hits.</p>
+
+    <div class="socials">
+      <!-- Instagram -->
+      <a href="#" aria-label="Instagram">
+        <svg viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" rx="4"/>
+          <circle cx="12" cy="12" r="4.1"/>
+          <circle cx="17" cy="7" r="1.1" fill="#fff"/>
+        </svg>
+      </a>
+      <!-- LinkedIn -->
+      <a href="#" aria-label="LinkedIn">
+        <svg viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" rx="3"/>
+          <rect x="8" y="10" width="2.3" height="7"/>
+          <circle cx="9.1" cy="8" r="1.1"/>
+          <path d="M13 10h2v1c.4-.6 1-1.2 2.1-1.2 1.6 0 2.4 1 2.4 2.9V17h-2.3v-3.3c0-.9-.3-1.5-1.1-1.5-.7 0-1.2.5-1.2 1.5V17H13z" fill="#fff"/>
+        </svg>
+      </a>
+      <!-- X -->
+      <a href="#" aria-label="X">
+        <svg viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" rx="4"/>
+          <path d="M9 8.5h1.4l2 2.7 2.2-2.7H16l-2.7 3.2L16 15.5h-1.4l-2.1-2.8-2.3 2.8H9l2.9-3.4z" fill="#fff"/>
+        </svg>
+      </a>
+      <!-- Mail -->
+      <a href="#" aria-label="Email">
+        <svg viewBox="0 0 24 24">
+          <rect x="4" y="6" width="16" height="12" rx="2.5"/>
+          <path d="M6 8l6 4.1L18 8" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  © <span id="year"></span> VisionaryStudio — Built for creators, founders & brands.
+</footer>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+/* AUTO YEAR */
+const yearEl = document.getElementById("year");
+if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+/* DICE TRI-DOT MENU — FULLY ANIMATED, CYCLING 1 → 2 → 3 → 1 */
+const triMenu = document.getElementById("triMenuButton");
+const mobileDropdown = document.getElementById("mobileDropdown");
+const dots = triMenu ? triMenu.querySelectorAll(".tri-dot") : [];
+let diceState = 1; // 1, 2, 3
+
+function renderDiceFace(num){
+  if (!dots.length) return;
+  // hide all
+  dots.forEach(dot => { dot.style.opacity = 0; });
+
+  if (num === 1){
+    // only center dot (dot1)
+    dots.forEach(dot => {
+      if (dot.classList.contains("dot1")) dot.style.opacity = 1;
+    });
+  } else if (num === 2){
+    // top-left & bottom-right (dot2 & dot3)
+    dots.forEach(dot => {
+      if (dot.classList.contains("dot2") || dot.classList.contains("dot3")){
+        dot.style.opacity = 1;
+      }
+    });
+  } else {
+    // triangle: all three
+    dots.forEach(dot => { dot.style.opacity = 1; });
+  }
+}
+
+// initialize dice face
+renderDiceFace(diceState);
+
+if (triMenu && mobileDropdown){
+  triMenu.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    // prevent spamming while animation is running
+    if (!triMenu.classList.contains("rolling")){
+      triMenu.classList.add("rolling");
+
+      // add slight blur mid-roll
+      dots.forEach(dot => {
+        dot.style.transition = "opacity 0.18s ease, filter 0.18s ease";
+        dot.style.filter = "blur(2px)";
+      });
+
+      // change face mid-animation
+      setTimeout(() => {
+        diceState = diceState === 3 ? 1 : diceState + 1;
+        renderDiceFace(diceState);
+        dots.forEach(dot => {
+          dot.style.filter = "blur(0)";
+        });
+      }, 180);
+
+      // clear rolling state
+      setTimeout(() => {
+        triMenu.classList.remove("rolling");
+      }, 450);
+    }
+
+    // toggle dropdown
+    const opening = !triMenu.classList.contains("open");
+    triMenu.classList.toggle("open");
+    mobileDropdown.classList.toggle("active");
+  });
+
+  // close on link click
+  mobileDropdown.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", () => {
+      triMenu.classList.remove("open");
+      mobileDropdown.classList.remove("active");
+    });
+  });
+
+  // close on outside click
+  document.addEventListener("click", (e) => {
+    if (!triMenu.contains(e.target) && !mobileDropdown.contains(e.target)){
+      triMenu.classList.remove("open");
+      mobileDropdown.classList.remove("active");
+    }
+  });
+}
+
+/* FEATURE CARD SCROLL-IN */
+gsap.utils.toArray(".feature-card").forEach((card, i) => {
+  gsap.to(card, {
+    opacity: 1,
+    y: 0,
+    duration: 0.6,
+    delay: i * 0.1,
+    scrollTrigger: {
+      trigger: card,
+      start: "top 80%"
+    }
+  });
+});
+
+/* STACK SECTION SCROLL REVEAL */
+const stackSection = document.querySelector(".stack-section");
+if (stackSection) {
+  gsap.from(stackSection, {
+    opacity: 0,
+    y: 80,
+    duration: 0.7,
+    ease: "power3.out",
+    scrollTrigger: {
+      trigger: stackSection,
+      start: "top 80%"
+    }
+  });
+}
+
+/* 5-CARD 3D CAROUSEL (wheel) */
+const stackCards = Array.from(document.querySelectorAll(".stack-card"));
+let activeIndex = 0;
+
+function updateStackPositions() {
+  const total = stackCards.length;
+  stackCards.forEach((card, idx) => {
+    card.classList.remove("pos-center","pos-left1","pos-left2","pos-right1","pos-right2");
+    let offset = (idx - activeIndex + total) % total;
+    // 0 center, 1 right1, 2 right2, 3 left2, 4 left1
+    if (offset === 0) {
+      card.classList.add("pos-center");
+      card.style.opacity = 1;
+    } else if (offset === 1) {
+      card.classList.add("pos-right1");
+      card.style.opacity = 0.85;
+    } else if (offset === 2) {
+      card.classList.add("pos-right2");
+      card.style.opacity = 0.55;
+    } else if (offset === 3) {
+      card.classList.add("pos-left2");
+      card.style.opacity = 0.55;
+    } else if (offset === 4) {
+      card.classList.add("pos-left1");
+      card.style.opacity = 0.85;
+    }
+  });
+}
+
+if (stackCards.length) {
+  updateStackPositions();
+
+  const prevBtn = document.getElementById("stackPrev");
+  const nextBtn = document.getElementById("stackNext");
+
+  function goNext() {
+    activeIndex = (activeIndex + 1) % stackCards.length;
+    updateStackPositions();
+  }
+  function goPrev() {
+    activeIndex = (activeIndex - 1 + stackCards.length) % stackCards.length;
+    updateStackPositions();
+  }
+
+  if (nextBtn) nextBtn.addEventListener("click", goNext);
+  if (prevBtn) prevBtn.addEventListener("click", goPrev);
+
+  // Keyboard navigation
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") goNext();
+    if (e.key === "ArrowLeft") goPrev();
+  });
+
+  // Touch swipe (mobile)
+  const wrap = document.getElementById("stackWrap");
+  let touchStartX = null;
+  let touchStartY = null;
+
+  if (wrap) {
+    wrap.addEventListener("touchstart", (e) => {
+      const t = e.touches[0];
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+    }, {passive:true});
+
+    wrap.addEventListener("touchend", (e) => {
+      if (touchStartX === null || touchStartY === null) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchStartX;
+      const dy = t.clientY - touchStartY;
+
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+      const threshold = 40;
+
+      if (absDx > absDy && absDx > threshold) {
+        if (dx < 0) {
+          goNext(); // swipe left -> next
+        } else {
+          goPrev(); // swipe right -> prev
+        }
+      }
+
+      touchStartX = null;
+      touchStartY = null;
+    }, {passive:true});
+  }
+
+  window.addEventListener("resize", updateStackPositions);
+}
+</script>
+
+</body>
+</html>
