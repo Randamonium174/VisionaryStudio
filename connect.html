@@ -170,18 +170,30 @@ nav.primary a:hover::after{width:100%}
    MOBILE DROPDOWN
 ----------------------------------------------------------- */
 .mobile-dropdown{
-  position:fixed;top:100px;left:50%;
+  position:fixed;
+  top:100px;
+  left:50%;
   transform:translateX(-50%) translateY(-10px);
-  width:88%;max-width:720px;
+  width:88%;
+  max-width:720px;
   background:rgba(0,0,0,0.85);
   backdrop-filter:blur(8px);
-  border-radius:16px;padding:14px 0;
+  border-radius:16px;
+  padding:14px 0;
   border:1px solid rgba(255,255,255,0.1);
-  display:flex;flex-direction:column;
-  gap:12px;align-items:center;
-  opacity:0;pointer-events:none;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+
+  opacity:0;
+  pointer-events:none;
   transition:.25s;
+
+  /* ⭐ FIX ⭐ */
+  z-index: 9999;
 }
+
 
 .mobile-dropdown.active{
   opacity:1;pointer-events:auto;
