@@ -3,12 +3,16 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>VisionaryStudio — Chat</title>
+<title>VisionaryStudio — AI Simulation</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;800&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-<style>
+<!-- Chart.js for small visual reports & html2canvas + jspdf for PDF export -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
+<style>
 /* ---------------------------------------------
    ROOT VARIABLES
 --------------------------------------------- */
@@ -19,17 +23,21 @@
 
   --bubble-top:rgba(6,6,8,0.95);
   --bubble-bottom:rgba(8,8,10,0.72);
+
+  --glass-bg: rgba(0,0,0,0.35);
 }
 
 /* ---------------------------------------------
-   GLOBAL
+   GLOBAL — FULL PAGE SCROLL ENABLED
 --------------------------------------------- */
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{
-  height:100%;
-  overflow:hidden;
+  min-height:100%;
+  overflow-x:hidden;
+  overflow-y:auto;
   font-family:Inter,sans-serif;
   color:white;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.9) 100%);
 }
 
 /* ---------------------------------------------
@@ -44,13 +52,7 @@ html,body{
   background-position:center;
   background-repeat:no-repeat;
   pointer-events:none;
-  filter:brightness(.92);
-}
-@media (max-width:900px){
-  .vs-fixed-bg{
-    background-image:url("https://images.unsplash.com/photo-1628498188873-579210ce622e?q=80&w=654&auto=format&fit=crop");
-    background-position:center top;
-  }
+  filter:brightness(.92) ;
 }
 
 /* ---------------------------------------------
@@ -69,11 +71,11 @@ html,body{
   display:flex; justify-content:space-between;
   align-items:center;
   border-radius:20px;
-  background:rgba(0,0,0,0.65);
-  border:1px solid rgba(255,255,255,0.7);
+  background:rgba(0,0,0,0.55);
+  border:1px solid rgba(255,255,255,0.25);
   backdrop-filter:blur(16px);
   box-shadow:
-    0 0 18px rgba(255,255,255,0.25),
+    0 0 18px rgba(255,255,255,0.06),
     0 18px 60px rgba(0,0,0,0.8);
 }
 
@@ -118,9 +120,7 @@ nav.primary a::after{
 }
 nav.primary a:hover::after{width:100%}
 
-/* ---------------------------------------------
-   TRI-DOT MENU
---------------------------------------------- */
+/* TRI-DOT MENU */
 .tri-menu{
   display:none;
   position:relative;
@@ -156,7 +156,7 @@ nav.primary a:hover::after{width:100%}
   20%{transform:translateY(-2px) rotate(10deg);}
   40%{transform:translateY(2px) rotate(-10deg);}
   60%{transform:translateY(-1px) rotate(6deg);}
-  80%{transform:translateY(1px) rotate(-4deg);}
+  80%{transform:translateY(1px) rotate(-4px);}
   100%{transform:translateY(0) rotate(0deg);}
 }
 
@@ -198,128 +198,235 @@ nav.primary a:hover::after{width:100%}
 }
 
 /* ---------------------------------------------
-   CHAT AREA
+   MAIN CONTAINER
 --------------------------------------------- */
-.chat-page{
-  position:fixed;top:100px;left:0;right:0;bottom:0;
-  overflow-y:auto; padding:20px;
-  display:flex; justify-content:center;
+.main-wrap {
+  position:relative;
+  width:100%;
+  max-width:1350px;
+  margin:120px auto 40px;
+  padding:0 20px;
 }
 
-.msg-column{width:100%;max-width:880px}
-
-.top-desc{
-  margin-top:12px;text-align:center;
-  font-size:1.05rem;font-weight:600;
-  background:linear-gradient(90deg,var(--g-indigo),var(--g-violet),var(--g-pink));
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  opacity:1;transition:.25s;
-}
-.top-desc.hidden{
-  opacity:0;transform:translateY(-10px);pointer-events:none;
-}
-
-.chat-stage{
-  margin-top:20px;padding-bottom:180px;
-  display:flex;flex-direction:column;gap:14px;
-}
-
-.msg-row{width:100%;display:flex}
-.msg-row.user{justify-content:flex-end}
-.msg-row.bot{justify-content:flex-start}
-
-.msg-bubble{
-  max-width:76%;
-  padding:14px 16px;
+.sim-container{
+  width:100%;
   border-radius:18px;
-  background:linear-gradient(180deg,var(--bubble-top),var(--bubble-bottom));
+  display:flex;
+  overflow:hidden;
   border:1px solid rgba(255,255,255,0.06);
-  backdrop-filter:blur(10px);
-  opacity:0;transform:translateY(8px);
-  transition:.25s;
+  background:var(--glass-bg);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.02);
 }
-.msg-bubble.show{
-  opacity:1;transform:translateY(0);
+
+/* left & right panels */
+.panel {
+  padding:28px;
+  width:50%;
+  min-width:320px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  max-height: calc(80vh); /* ensures panels can scroll within viewport */
+  overflow-y:auto;
 }
-.msg-text{
+
+/* left panel specifics (input + options) */
+.left-panel {
+  border-right:1px solid rgba(255,255,255,0.03);
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.02));
+}
+
+/* right panel (ai live) */
+.right-panel{
+  padding:28px;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+/* Titles */
+.panel h3 {
+  font-family:'Space Grotesk';
+  font-weight:800;
+  font-size:1.05rem;
+  letter-spacing:0.02em;
+  color: white;
+}
+
+/* Input box */
+.idea-textarea {
+  width:100%;
+  min-height:120px;
+  max-height:300px;
+  padding:14px;
+  border-radius:12px;
+  background:linear-gradient(180deg, rgba(6,6,8,0.95), rgba(8,8,10,0.68));
+  border:1px solid rgba(255,255,255,0.06);
   color:white;
-  font-size:0.96rem;
+  font-size:0.95rem;
+  outline:none;
+  resize:vertical;
 }
 
-/* ---------------------------------------------
-   TYPING INDICATOR
---------------------------------------------- */
-.typing-bubble {
-  max-width: 70%;
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, var(--bubble-top), var(--bubble-bottom));
-  border: 1px solid rgba(255,255,255,0.06);
-  backdrop-filter: blur(10px);
-  display: inline-flex;
-  gap: 6px;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: .25s;
+/* run/reset */
+.controls{
+  display:flex; gap:12px; margin-top:6px;
+}
+.btn {
+  padding:10px 14px; border-radius:12px; cursor:pointer; border:none;
+  font-weight:700; letter-spacing:0.02em;
+  background:transparent;
+  color:white;
+  border:2px solid;
+  border-image: linear-gradient(90deg,var(--g-indigo),var(--g-violet),var(--g-pink)) 1;
+  transition: .25s ease;
+}
+.btn:hover{
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 8px 30px rgba(99,102,241,0.06);
+}
+.btn.primary{
+  background: linear-gradient(90deg,var(--g-indigo),var(--g-violet));
+  border:none;
 }
 
-.typing-bubble.show {
-  opacity: 1;
+/* help text */
+.small {
+  color:rgba(255,255,255,0.6);
+  font-size:0.88rem;
+  line-height:1.3;
+}
+
+/* live ai feed (right) */
+.ai-feed {
+  flex:1;
+  overflow:auto;
+  padding:12px;
+  border-radius:12px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.24));
+  border:1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 0 32px rgba(255,255,255,0.03); /* subtle white glow */
+}
+
+/* each ai message */
+.ai-msg {
+  margin-bottom:12px;
+  padding:12px;
+  border-radius:12px;
+  background:linear-gradient(180deg, rgba(6,6,8,0.9), rgba(8,8,10,0.6));
+  border:1px solid rgba(255,255,255,0.03);
+  opacity:0;
+  transform: translateY(6px);
+  transition: opacity 360ms ease, transform 360ms ease;
+}
+
+/* visible state for fade-in */
+.ai-msg.show {
+  opacity:1;
   transform: translateY(0);
 }
 
-.dot {
-  width: 6px; height: 6px;
-  background: white;
-  border-radius: 50%;
-  animation: blink 1.4s infinite ease-in-out;
+/* dynamic options area */
+.dynamic-options { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+.dynamic-options .opt-btn {
+  padding:10px 14px; border-radius:999px; cursor:pointer; border:2px solid;
+  border-image: linear-gradient(90deg,var(--g-indigo),var(--g-violet)) 1;
+  background:transparent;
+  color:white;
+  font-weight:700;
+  transform-origin:center;
+  opacity:0;
+  transform: translateY(8px) scale(0.98);
+  transition: opacity 260ms ease, transform 260ms cubic-bezier(.2,.9,.2,1);
+}
+.dynamic-options .opt-btn.visible {
+  opacity:1;
+  transform: translateY(0) scale(1);
+}
+.dynamic-options .opt-btn:hover { transform:translateY(-4px) scale(1.02); background:rgba(255,255,255,0.04); }
+
+/* reply area (hidden by default) */
+.reply-area {
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-top:8px;
+  opacity:0;
+  max-height:0;
+  overflow:hidden;
+  transition: opacity 260ms ease, max-height 260ms ease;
+}
+.reply-area.show {
+  opacity:1;
+  max-height:200px;
+}
+.reply-input {
+  flex:1;
+  padding:10px 12px;
+  border-radius:10px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.05);
+  color:white;
+  font-size:0.95rem;
+  outline:none;
+  resize:none;
+  min-height:42px;
 }
 
-.dot:nth-child(2) { animation-delay: 0.2s; }
-.dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes blink {
-  0%, 80%, 100% { opacity: 0.2; }
-  40% { opacity: 1; }
+/* send button */
+.send-btn {
+  padding:10px 14px;
+  border-radius:10px;
+  border:none;
+  background:linear-gradient(90deg,var(--g-indigo),var(--g-violet));
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow: 0 8px 24px rgba(99,102,241,0.06);
 }
 
-/* ---------------------------------------------
-   INPUT BAR
---------------------------------------------- */
-.floating-input{
-  position:fixed;
-  bottom:20px; left:50%;
-  transform:translateX(-50%);
-  width:100%; max-width:760px;
-  padding:0 12px; z-index:400;
+/* visual report card */
+.report-card {
+  width:320px;
+  max-width:95%;
+  padding:12px;
+  border-radius:12px;
+  position:relative;
+  background:linear-gradient(180deg, rgba(8,8,10,0.98), rgba(6,6,8,0.85));
+  border:1px solid rgba(255,255,255,0.06);
+  box-shadow:0 12px 40px rgba(0,0,0,0.6), 0 6px 18px rgba(99,102,241,0.06);
 }
 
-.input-inner{
-  display:flex; align-items:center; gap:10px;
-  padding:6px 14px;
-  border-radius:28px;
-  background:rgba(0,0,0,0.28);
-  border:1px solid rgba(255,255,255,0.12);
-  backdrop-filter:blur(12px);
+/* bottom area in right panel for download and small controls */
+.right-bottom {
+  display:flex; gap:8px; align-items:center; justify-content:flex-end;
 }
 
-.input-textarea{
-  flex:1; background:transparent;
-  border:none !important; outline:none !important;
-  color:white; font-size:0.92rem;
-  padding:4px 0;
-  resize:none; overflow-y:hidden;
-  min-height:20px; max-height:120px;
+/* responsive */
+@media (max-width:1000px) {
+  .sim-container { flex-direction:column; }
+  .panel { width:100%; }
+  .left-panel { border-right: none; border-bottom:1px solid rgba(255,255,255,0.03); }
+  .report-card { width:100%; }
+
+  /* make option buttons full-width on mobile */
+  .dynamic-options { gap:12px; }
+  .dynamic-options .opt-btn {
+    width:100%;
+    display:block;
+    text-align:center;
+    padding:12px 16px;
+  }
+
+  .reply-area { padding:8px 0; }
 }
 
-.btn-send{
-  width:40px;height:40px;border-radius:50%;
-  background:linear-gradient(135deg,#7C5CFF,#06B6D4);
-  display:flex;align-items:center;justify-content:center;
-  border:none;cursor:pointer;
-}
-.btn-send svg{fill:white;width:18px;height:18px}
+/* small helpers */
+.kv { display:flex; justify-content:space-between; gap:8px; font-size:0.92rem; color:rgba(255,255,255,0.88); }
+.kv .v { color:rgba(255,255,255,0.68); font-weight:600; }
 
 </style>
 </head>
@@ -333,7 +440,7 @@ nav.primary a:hover::after{width:100%}
 <header class="nav">
 
   <div class="brand-wrap">
-    <img src="vs.png" class="brand-logo">
+    <img src="vs.png" class="brand-logo" alt="logo">
     <div class="brand">VisionaryStudio</div>
   </div>
 
@@ -361,45 +468,72 @@ nav.primary a:hover::after{width:100%}
   <a href="see.html">DEMO</a>
 </div>
 
-<!-- CHAT -->
-<div class="chat-page" id="chatPage">
-  <div class="msg-column">
+<!-- MAIN SIMULATION CONTAINER -->
+<div class="main-wrap">
+  <div class="sim-container" id="simContainer">
 
-    <div class="top-desc" id="topDesc">
-      Describe an idea or say "Help me create an idea".
+    <!-- LEFT: User input & options -->
+    <div class="panel left-panel" id="leftPanel">
+      <h3>Idea Simulation</h3>
+      <div class="small">Describe the idea (one short sentence)</div>
+
+      <textarea id="ideaInput" class="idea-textarea" placeholder="Example: 'A modular notebook app for student note workflows.'"></textarea>
+
+      <div id="dynamicArea">
+        <div class="small" style="margin-top:6px">AI options</div>
+        <div class="dynamic-options" id="dynamicOptions"></div>
+
+        <!-- Reply area appears only for open text replies (hidden by default) -->
+        <div class="reply-area" id="replyArea" aria-hidden="true">
+          <textarea id="replyInput" class="reply-input" placeholder="Type your reply for the AI (only appears when AI asks an open question)"></textarea>
+          <button id="sendReplyBtn" class="send-btn">Send</button>
+        </div>
+      </div>
+
+      <div class="controls" style="margin-top:auto">
+        <button class="btn" id="btnReset">Reset</button>
+        <button class="btn primary" id="btnRun">Run demo</button>
+      </div>
+
+      <div style="margin-top:14px" class="small">This is a simulated preview intended to surface useful directions quickly.</div>
     </div>
 
-    <div class="chat-stage" id="chatStage"></div>
+    <!-- RIGHT: Live AI + visual report -->
+    <div class="panel right-panel">
+      <div style="display:flex;gap:10px;align-items:center;justify-content:space-between">
+        <h3>MindFlow AI</h3>
+        <div class="small" id="statusLabel">Ready</div>
+      </div>
 
-  </div>
-</div>
+      <div class="ai-feed" id="aiFeed" role="log" aria-live="polite"></div>
 
-<!-- INPUT -->
-<div class="floating-input">
-  <div class="input-inner">
-    <textarea id="chatInput" class="input-textarea" placeholder="Describe your idea…"></textarea>
-    <button class="btn-send" id="btnSend">
-      <svg viewBox="0 0 24 24"><path d="M2 21L23 12 2 3v7l15 2-15 2z"/></svg>
-    </button>
+      <div class="right-bottom">
+        <button class="btn" id="btnExport" title="Download report as PDF">Download full report</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script>
-
 /* ---------------------------------------------
-   GEMINI API
+   GEMINI API (same pattern as original)
+   Replace GEMINI_API_KEY with your key.
 --------------------------------------------- */
-const GEMINI_API_KEY = "AIzaSyBi1b-shwrEkSwIly2373LuuNJEnqdCBq8";
+const GEMINI_API_KEY = "AIzaSyASeMw_x0ciimP_6U9RMTzzmC13OOPTuQA"; // ← add your key here (or proxy on server for production)
 
-async function geminiGenerate(message) {
-  const url =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+async function geminiGenerateWithContext(conversation) {
+  // conversation: array of {role: 'system'|'user'|'assistant', text: '...'}
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+
+  // Construct prompt where the model receives the full conversation as a single message
+  const assembled = conversation.map(c => `${c.role.toUpperCase()}: ${c.text}`).join("\n\n");
 
   const body = {
     contents: [
       {
         role: "user",
-        parts: [{ text: message }]
+        parts: [{ text: assembled }]
       }
     ]
   };
@@ -417,21 +551,561 @@ async function geminiGenerate(message) {
     const data = await res.json();
 
     if (data.error) {
-      return "Gemini Error: " + data.error.message;
+      return { error: true, text: "Gemini Error: " + data.error.message, raw: data };
     }
 
-    return (
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No response received."
-    );
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
+    return { error: false, text, raw: data };
 
   } catch (err) {
-    return "Network error — failed to reach Gemini.";
+    return { error: true, text: "Network error — failed to reach Gemini.", raw: err };
   }
 }
 
 /* ---------------------------------------------
-   TRI-DOT MENU JS
+   UI ELEMENTS & HELPERS
+--------------------------------------------- */
+const ideaInput = document.getElementById("ideaInput");
+const dynamicOptions = document.getElementById("dynamicOptions");
+const aiFeed = document.getElementById("aiFeed");
+const btnRun = document.getElementById("btnRun");
+const btnReset = document.getElementById("btnReset");
+const btnExport = document.getElementById("btnExport");
+const statusLabel = document.getElementById("statusLabel");
+
+const replyArea = document.getElementById("replyArea");
+const replyInput = document.getElementById("replyInput");
+const sendReplyBtn = document.getElementById("sendReplyBtn");
+
+function escapeHTML(t) {
+  return String(t).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* ---------------------------------------------
+   Conversation State
+--------------------------------------------- */
+let conversationState = []; // array of {role, text}
+let awaitingOptions = false; // when AI provides buttons for user to choose
+let awaitingTextReply = false; // when AI expects free text reply
+let lastAIResponse = null;   // keep last raw text
+let lastReportData = null;
+
+function pushUser(text) {
+  conversationState.push({ role: "user", text });
+}
+
+function pushAI(text) {
+  conversationState.push({ role: "assistant", text });
+}
+
+/* ---------------------------------------------
+   Render AI messages into right panel (with fade-in)
+--------------------------------------------- */
+function appendAIMessage(htmlContent) {
+  const msg = document.createElement("div");
+  msg.className = "ai-msg";
+  msg.innerHTML = htmlContent;
+  aiFeed.appendChild(msg);
+
+  // Force layout then show for transition
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      msg.classList.add("show");
+      aiFeed.scrollTop = aiFeed.scrollHeight;
+    });
+  });
+}
+
+/* small typing indicator */
+function showStatus(text="Thinking…") {
+  statusLabel.textContent = text;
+}
+function showTyping() {
+  showStatus("Thinking…");
+}
+
+/* ---------------------------------------------
+   Dynamic option renderers (left panel)
+--------------------------------------------- */
+function clearDynamicOptions() {
+  dynamicOptions.innerHTML = "";
+  awaitingOptions = false;
+}
+
+function hideReplyArea() {
+  awaitingTextReply = false;
+  replyArea.classList.remove("show");
+  replyArea.setAttribute("aria-hidden", "true");
+  replyInput.value = "";
+}
+
+function showReplyArea() {
+  awaitingTextReply = true;
+  // hide options if any
+  clearDynamicOptions();
+  replyArea.classList.add("show");
+  replyArea.setAttribute("aria-hidden", "false");
+  setTimeout(() => replyInput.focus(), 120);
+}
+
+function renderOptions(optionsArray) {
+  // optionsArray: array of strings
+  clearDynamicOptions();
+  hideReplyArea();
+
+  optionsArray.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.className = "opt-btn";
+    btn.textContent = opt;
+    btn.addEventListener("click", () => {
+      onOptionSelected(opt);
+    });
+    dynamicOptions.appendChild(btn);
+
+    // Animate in with stagger
+    setTimeout(() => btn.classList.add("visible"), 20 + (i * 70));
+  });
+  awaitingOptions = true;
+  showStatus("Awaiting selection");
+}
+
+/* when user clicks option button */
+async function onOptionSelected(choice) {
+  // show selection in feed
+  appendAIMessage(`<div><strong>Selected:</strong> ${escapeHTML(choice)}</div>`);
+  pushUser(choice);
+
+  // Clear UI
+  clearDynamicOptions();
+  hideReplyArea();
+
+  // continue conversation
+  await runModelTurn();
+}
+
+/* ---------------------------------------------
+   Send a text reply when AI expects open input
+--------------------------------------------- */
+async function sendTextReply() {
+  const txt = replyInput.value.trim();
+  if (!txt) return;
+  appendAIMessage(`<div><strong>You:</strong> ${escapeHTML(txt)}</div>`);
+  pushUser(txt);
+
+  hideReplyArea();
+  await runModelTurn();
+}
+
+sendReplyBtn.addEventListener("click", sendTextReply);
+replyInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendTextReply();
+  }
+});
+
+/* ---------------------------------------------
+   Report generation helpers (chart + PDF)
+--------------------------------------------- */
+
+function buildReportCard(report) {
+  // report: {summary, pitch, scores: {novelty:.., feasibility:.., clarity:..,...}, chartData:{labels:[],values:[]}}
+  const card = document.createElement("div");
+  card.className = "report-card";
+
+  const title = document.createElement("div");
+  title.style.fontWeight = 800;
+  title.style.marginBottom = "8px";
+  title.textContent = "AI Report Summary";
+  card.appendChild(title);
+
+  const summary = document.createElement("div");
+  summary.className = "small";
+  summary.style.marginBottom = "10px";
+  summary.innerHTML = `<strong>Summary</strong><div style="margin-top:6px">${escapeHTML(report.summary || report.pitch || "—")}</div>`;
+  card.appendChild(summary);
+
+  // scores list
+  const scores = report.scores || {};
+  const keys = Object.keys(scores);
+  if (keys.length) {
+    const scoreWrap = document.createElement("div");
+    scoreWrap.style.display = "grid";
+    scoreWrap.style.gridTemplateColumns = "1fr 1fr";
+    scoreWrap.style.gap = "6px";
+    scoreWrap.style.marginBottom = "10px";
+    keys.forEach(k => {
+      const kv = document.createElement("div");
+      kv.className = "kv";
+      kv.innerHTML = `<div style="text-transform:capitalize">${escapeHTML(k)}</div><div class="v">${Math.round(scores[k])}%</div>`;
+      scoreWrap.appendChild(kv);
+    });
+    card.appendChild(scoreWrap);
+  }
+
+  // chart
+  const canvasWrap = document.createElement("div");
+  canvasWrap.style.marginTop = "8px";
+  const canvas = document.createElement("canvas");
+  canvas.width = 300;
+  canvas.height = 180;
+  canvasWrap.appendChild(canvas);
+  card.appendChild(canvasWrap);
+
+  // Keep chart instance so we can export later
+  setTimeout(() => {
+    const chartData = report.chartData || { labels: keys, values: keys.map(k => scores[k] || 0) };
+    try {
+      new Chart(canvas.getContext("2d"), {
+        type: 'radar',
+        data: {
+          labels: chartData.labels,
+          datasets: [{
+            label: 'Scores',
+            data: chartData.values,
+            fill: true,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            r: {
+              suggestedMin: 0,
+              suggestedMax: 100
+            }
+          }
+        }
+      });
+    } catch (e) {
+      console.warn("Chart render failed", e);
+    }
+  }, 60);
+
+  return card;
+}
+
+/* PDF export */
+btnExport.addEventListener("click", async () => {
+  if (!lastReportData) {
+    alert("No report available yet. Run the simulation first.");
+    return;
+  }
+
+  const exportEl = buildReportCard(lastReportData);
+  exportEl.style.width = "760px";
+  exportEl.style.padding = "24px";
+  exportEl.style.background = "#0b0b0b";
+  exportEl.style.color = "#fff";
+  exportEl.style.position = "fixed";
+  exportEl.style.left = "-9999px";
+  document.body.appendChild(exportEl);
+
+  try {
+    const canvas = await html2canvas(exportEl, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "pt",
+      format: "a4"
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgWidth = pageWidth - 40;
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+    pdf.addImage(imgData, 'PNG', 20, 30, imgWidth, imgHeight);
+    pdf.save('visionarystudio_report.pdf');
+
+  } catch (err) {
+    console.error(err);
+    alert("Export failed: " + err.message);
+  } finally {
+    exportEl.remove();
+  }
+});
+
+/* ---------------------------------------------
+   Parsing / extraction utilities
+--------------------------------------------- */
+
+function tryExtractJSONFromText(text) {
+  // find first { ... } block and parse
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start !== -1 && end !== -1 && end > start) {
+    const candidate = text.slice(start, end + 1);
+    try {
+      const parsed = JSON.parse(candidate);
+      return parsed;
+    } catch (e) {
+      // not valid JSON, try to clean simple trailing commas
+      try {
+        const cleaned = candidate.replace(/,(\s*})/g, '$1').replace(/,(\s*])/g, '$1');
+        return JSON.parse(cleaned);
+      } catch (e2) {
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+function tryExtractOptions(text) {
+  // look for line starting with OPTIONS: or Option:
+  const optMatch = text.match(/OPTIONS:\s*(\[.*?\])/s) || text.match(/OPTIONS:\s*(.*)/i);
+  if (optMatch) {
+    const possible = optMatch[1];
+    try {
+      const arr = JSON.parse(possible);
+      if (Array.isArray(arr)) return arr;
+    } catch(e){}
+    // fallback: split by commas
+    if (possible && typeof possible === 'string') {
+      return possible.split?.(',').map(s=>s.replace(/[\]\[]/g,'').trim()).filter(Boolean) || null;
+    }
+  }
+
+  // Look for lines like "- existing" or "1) existing"
+  const lines = text.split("\n").map(l=>l.trim()).filter(Boolean);
+  const opts = [];
+  for (const ln of lines) {
+    if (/^\- /.test(ln) || /^\d+[\.\)]/.test(ln) || /^[•\*]/.test(ln)) {
+      const cleaned = ln.replace(/^[\-\d\.\)\*\•\s]+/, '').trim();
+      if (cleaned.length && cleaned.length < 80) opts.push(cleaned);
+    }
+  }
+  return opts.length ? opts : null;
+}
+
+/* ---------------------------------------------
+   Core: runModelTurn (calls Gemini and handles outputs)
+--------------------------------------------- */
+async function runModelTurn() {
+  showTyping();
+  appendAIMessage(`<div class="small" style="opacity:0.85">AI is thinking…</div>`);
+
+  const response = await geminiGenerateWithContext(conversationState);
+
+  // remove placeholder thinking bubble if still present
+  const lastMsg = aiFeed.lastElementChild;
+  if (lastMsg && lastMsg.textContent && lastMsg.textContent.includes('AI is thinking')) {
+    lastMsg.remove();
+  }
+
+  if (response.error) {
+    appendAIMessage(`<div style="color:#f88">Error: ${escapeHTML(response.text)}</div>`);
+    showStatus("Error");
+    return;
+  }
+
+  const text = response.text.trim();
+  lastAIResponse = text;
+  pushAI(text);
+
+  // present AI text
+  appendAIMessage(`<div>${escapeHTML(text).replace(/\n/g,'<br>')}</div>`);
+
+  // Try options
+  const opts = tryExtractOptions(text);
+  if (opts && opts.length) {
+    renderOptions(opts);
+    showStatus("Awaiting selection");
+    return;
+  }
+
+  // Try JSON report
+  const parsed = tryExtractJSONFromText(text);
+  if (parsed && parsed.report) {
+    lastReportData = parsed.report;
+    const card = buildReportCard(parsed.report);
+    appendAIMessage(`<div><strong>Visual report generated:</strong></div>`);
+    const wrapper = document.createElement("div");
+    wrapper.className = "ai-msg";
+    wrapper.style.padding = "6px";
+    wrapper.style.borderRadius = "10px";
+    wrapper.appendChild(card);
+    aiFeed.appendChild(wrapper);
+    // show fade on appended report wrapper
+    requestAnimationFrame(()=>requestAnimationFrame(()=>wrapper.classList.add("show")));
+    aiFeed.scrollTop = aiFeed.scrollHeight;
+    showStatus("Report ready");
+    return;
+  }
+
+  // Heuristic: if the AI looks final (contains 'Summary' or 'Report' or 'Pitch') create a basic report
+  if (/summary|pitch|report/i.test(text)) {
+    const summaryMatch = text.match(/Summary[:\-]\s*([\s\S]{1,800})/i);
+    const pitchMatch = text.match(/Pitch[:\-]\s*([\s\S]{1,800})/i);
+    const summary = summaryMatch ? summaryMatch[1].trim() : (text.slice(0,600));
+    const scores = {
+      novelty: Math.floor(Math.random()*40)+50,
+      feasibility: Math.floor(Math.random()*40)+40,
+      clarity: Math.floor(Math.random()*40)+50,
+      revenue: Math.floor(Math.random()*40)+35
+    };
+    const report = {
+      summary,
+      pitch: pitchMatch ? pitchMatch[1].trim() : summary,
+      scores,
+      chartData: { labels: Object.keys(scores), values: Object.values(scores) }
+    };
+    lastReportData = report;
+    const card = buildReportCard(report);
+    const wrapper = document.createElement("div");
+    wrapper.className = "ai-msg";
+    wrapper.style.padding = "6px";
+    wrapper.style.borderRadius = "10px";
+    wrapper.appendChild(card);
+    aiFeed.appendChild(wrapper);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>wrapper.classList.add("show")));
+    aiFeed.scrollTop = aiFeed.scrollHeight;
+    showStatus("Report ready");
+    return;
+  }
+
+  // Otherwise, the AI likely expects a text reply — show reply area
+  showReplyArea();
+  showStatus("Awaiting reply");
+}
+
+/* ---------------------------------------------
+   Flow manager: start simulation with system prompt and initial user idea
+--------------------------------------------- */
+function detectAudienceFromText(text) {
+  if (!text) return null;
+  const t = text.toLowerCase();
+  const audienceKeywords = [
+    {k: 'students', words:['student','students','school','classroom','pupil','pupils','teacher','teachers']},
+    {k: 'founders', words:['founder','founders','startup','entrepreneur','founding']},
+    {k: 'developers', words:['developer','developers','engineer','engineers','programmer','programmers']},
+    {k: 'analysts', words:['analyst','analysts','analytics','data analyst','data science']},
+    {k: 'enterprise', words:['enterprise','company','organisation','organization','admin','admins','hr','business']}
+  ];
+  for (const a of audienceKeywords) {
+    for (const w of a.words) {
+      if (t.includes(w)) return a.k;
+    }
+  }
+  return null;
+}
+
+function isProductIdea(text) {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  const words = ['app','platform','product','tool','service','system','dashboard','software','saas','website'];
+  return words.some(w => t.includes(w));
+}
+
+function isMarketingIdea(text) {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  const words = ['marketing','campaign','launch','ads','advert','promotion','brand','social','influencer'];
+  return words.some(w => t.includes(w));
+}
+
+function resetSimulation() {
+  conversationState = [];
+  awaitingOptions = false;
+  awaitingTextReply = false;
+  lastAIResponse = null;
+  lastReportData = null;
+  aiFeed.innerHTML = "";
+  dynamicOptions.innerHTML = "";
+  replyInput.value = "";
+  ideaInput.value = "";
+  hideReplyArea();
+  showStatus("Ready");
+}
+
+function buildSystemPrompt() {
+  return `You are VisionaryStudio Assistant — an expert product strategist and startup advisor.
+You must run a concise, interactive simulation to help the user evaluate or build their idea.
+Important behavior:
+- Tailor every question and suggestion to the user's idea.
+- When asking follow-up questions, reference the user's idea explicitly (use the user's text) and explain why the question matters.
+- Keep questions single and focused (ask one question at a time).
+- ALWAYS start by asking whether the idea is existing, new, or an improvement. Provide: OPTIONS: ["existing","new","improvement"]
+- After the user's selection, decide whether to ask exactly one follow-up about AUDIENCE or TONE (not both) based on the idea text:
+   • If the idea text explicitly mentions an audience (students, teachers, analysts, etc.), DO NOT ask audience/tone.
+   • If the idea looks product-oriented (app/platform/product/tool/system/dashboard), ask one AUDIENCE question with OPTIONS e.g. ["students","teachers","admins","developers","founders","enterprise"].
+   • If the idea looks marketing-oriented (marketing/campaign/launch/ads), ask one TONE question with OPTIONS e.g. ["informative","persuasive","emotional","technical"].
+   • Otherwise, skip audience/tone unless it is genuinely useful; when asking, show OPTIONS.
+- When presenting multiple choices, include an explicit line in your reply that starts with OPTIONS: followed by a JSON array. Example:
+   OPTIONS: ["existing","new"]
+- When finalizing an analysis and producing a visual report, include a JSON block containing a "report" object. Example:
+{
+  "report": {
+    "summary": "Short summary text",
+    "pitch": "One-paragraph pitch",
+    "scores": { "novelty": 72, "feasibility": 60, "clarity": 80 },
+    "chartData": { "labels": ["novelty","feasibility","clarity"], "values":[72,60,80] }
+  }
+}
+- Keep replies succinct and actionable. Avoid asking multiple unrelated questions at once.`;
+}
+
+/* start the dynamic flow */
+btnRun.addEventListener("click", async () => {
+  const ideaText = ideaInput.value.trim();
+  if (!ideaText) {
+    alert("Please describe your idea in one short sentence first.");
+    return;
+  }
+
+  resetConversationButKeepUI();
+
+  const system = buildSystemPrompt();
+  conversationState.push({ role: "system", text: system });
+
+  // detect audience mention and idea type
+  const detectedAudience = detectAudienceFromText(ideaText); // e.g., 'students' or null
+  const productLike = isProductIdea(ideaText);
+  const marketingLike = isMarketingIdea(ideaText);
+
+  const meta = {
+    idea: ideaText,
+    detectedAudience,
+    productLike,
+    marketingLike
+  };
+
+  const userIntro = `User idea: "${ideaText}"
+Detected audience from idea text: ${meta.detectedAudience || "none"}
+Idea is product-like: ${meta.productLike}
+Idea is marketing-like: ${meta.marketingLike}
+
+Begin the interactive simulation. First ask: Is this an existing project, a new idea, or an improvement? Provide the answer exactly as OPTIONS: ["existing","new","improvement"]. After the user chooses, follow the system rules about asking one focused follow-up about audience OR tone if appropriate. Do not assume audience or tone unless detected in the idea text.`;
+
+  pushUser(userIntro);
+
+  appendAIMessage(`<div><strong>Simulation started</strong><div class="small" style="margin-top:6px">${escapeHTML(ideaText)}</div></div>`);
+  await runModelTurn();
+});
+
+/* helper to reset only conversation state and UI placeholders (keep input fields as-is) */
+function resetConversationButKeepUI() {
+  conversationState = [];
+  awaitingOptions = false;
+  awaitingTextReply = false;
+  lastAIResponse = null;
+  lastReportData = null;
+  aiFeed.innerHTML = "";
+  dynamicOptions.innerHTML = "";
+  hideReplyArea();
+  showStatus("Starting…");
+}
+
+/* Reset button */
+btnReset.addEventListener("click", () => {
+  resetSimulation();
+});
+
+/* ---------------------------------------------
+   Tri-menu mobile helper
 --------------------------------------------- */
 const triMenu = document.getElementById("triMenuButton");
 const mobileDropdown = document.getElementById("mobileDropdown");
@@ -478,116 +1152,23 @@ document.addEventListener("click", e => {
 });
 
 /* ---------------------------------------------
-   CHAT LOGIC
+   Small UX: press Enter to send selection in dynamic options if focus is in textarea
 --------------------------------------------- */
-const stage = document.getElementById("chatStage");
-const input = document.getElementById("chatInput");
-const send = document.getElementById("btnSend");
-const desc = document.getElementById("topDesc");
-const chatPage = document.getElementById("chatPage");
-
-function escapeHTML(t) {
-  return t.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function addMessage(text, who) {
-  const row = document.createElement("div");
-  row.className = "msg-row " + who;
-
-  const bubble = document.createElement("div");
-  bubble.className = "msg-bubble";
-
-  const span = document.createElement("div");
-  span.className = "msg-text";
-  span.innerHTML = escapeHTML(text).replace(/\n/g, "<br>");
-
-  bubble.appendChild(span);
-  row.appendChild(bubble);
-  stage.appendChild(row);
-
-  setTimeout(() => bubble.classList.add("show"), 10);
-  chatPage.scrollTop = chatPage.scrollHeight;
-}
-
-/* ---------------------------------------------
-   TYPING INDICATOR
---------------------------------------------- */
-let typingRow = null;
-
-function showTypingIndicator() {
-  typingRow = document.createElement("div");
-  typingRow.className = "msg-row bot";
-
-  const bubble = document.createElement("div");
-  bubble.className = "typing-bubble";
-
-  bubble.innerHTML = `
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
-  `;
-
-  typingRow.appendChild(bubble);
-  stage.appendChild(typingRow);
-
-  setTimeout(() => bubble.classList.add("show"), 10);
-  chatPage.scrollTop = chatPage.scrollHeight;
-}
-
-function removeTypingIndicator() {
-  if (typingRow) typingRow.remove();
-  typingRow = null;
-}
-
-/* ---------------------------------------------
-   BOT REPLY
---------------------------------------------- */
-async function botReply(message) {
-  return await geminiGenerate(message);
-}
-
-/* ---------------------------------------------
-   INPUT & SEND
---------------------------------------------- */
-let firstMessage = true;
-function hideDesc() {
-  if (firstMessage) {
-    desc.classList.add("hidden");
-    input.placeholder = "";
-    firstMessage = false;
-  }
-}
-
-async function sendMessage() {
-  const txt = input.value.trim();
-  if (!txt) return;
-
-  hideDesc();
-  addMessage(txt, "user");
-  input.value = "";
-
-  showTypingIndicator();
-
-  const reply = await botReply(txt);
-
-  removeTypingIndicator();
-
-  addMessage(reply, "bot");
-}
-
-send.addEventListener("click", sendMessage);
-
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) {
+ideaInput.addEventListener("keydown", (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
-    sendMessage();
+    // if options are present, do nothing (user should click), otherwise start the run
+    if (!awaitingOptions && !awaitingTextReply) {
+      btnRun.click();
+    }
   }
 });
 
-input.addEventListener("input", () => {
-  input.style.height = "20px";
-  input.style.height = Math.min(120, input.scrollHeight) + "px";
-});
+/* ---------------------------------------------
+   START: set default UI state
+--------------------------------------------- */
+resetSimulation();
+showStatus("Ready");
 
 </script>
 
