@@ -254,6 +254,123 @@
          so the dropdown stays at top:190px (clears nav shadow) */
       .page-wrap{padding:12px}
     }
+
+    /* ================= MOBILE OPTIMIZATION FIX (ADDED) ================= */
+    @media (max-width: 600px) {
+
+      /* Global text scaling */
+      body {
+        font-size: 14px;
+      }
+
+      .title {
+        font-size: clamp(1.8rem, 6vw, 2.4rem);
+      }
+
+      .lead {
+        font-size: 0.9rem;
+      }
+
+      .spotlight-title {
+        font-size: 1.3rem;
+      }
+
+      .spotlight-desc {
+        font-size: 0.9rem;
+        line-height: 1.35;
+      }
+
+      .spotlight-img {
+        height: 160px;
+      }
+
+      /* Page padding */
+      .page-wrap {
+        padding: 10px;
+      }
+
+      /* NAV adjustments */
+      .nav {
+        height: 60px;
+        padding: 6px 12px;
+      }
+
+      /* MODAL FIX — ensure content stays inside screen */
+      .modal {
+        height: 100vh !important;
+        overflow-y: auto;
+        padding-top: 70px !important; /* space for top close button */
+      }
+
+      .modal-left {
+        padding: 14px !important;
+      }
+
+      .modal-right {
+        padding: 14px !important;
+      }
+
+      .input-large,
+      .input-line {
+        font-size: 0.9rem;
+      }
+
+      /* Buttons visible ALWAYS */
+      .modal-actions {
+        position: sticky;
+        bottom: 0;
+        background: rgba(0,0,0,0.55);
+        padding: 10px 0;
+        backdrop-filter: blur(12px);
+        z-index: 9999;
+        justify-content: center;
+      }
+
+      .action-btn,
+      .action-cta {
+        font-size: 0.85rem;
+        padding: 10px 14px;
+      }
+
+      /* Keep close button reachable */
+      .modal-close {
+        top: 14px !important;
+        right: 14px !important;
+        width: 42px;
+        height: 42px;
+      }
+    }
+    /* ================================================================ */
+
+
+    /* ================= FOOTER FIX ================= */
+footer {
+  width: 100%;
+  text-align: center;
+  padding: 40px 0;
+  margin-top: 60px;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.5px;
+}
+
+/* Ensure footer is not hidden behind sticky modal buttons on mobile */
+@media (max-width: 600px) {
+
+  /* More spacing below content */
+  main {
+    padding-bottom: 120px !important;
+  }
+
+  footer {
+    padding: 60px 0 40px;
+    font-size: 0.85rem;
+  }
+}
+
+
+
+
   </style>
 </head>
 <body>
